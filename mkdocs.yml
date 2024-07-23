@@ -1,4 +1,126 @@
-site_name: Hi - Cdm2883
+site_name: Cdm2883 的个人博客
 site_url: https://blog.cdms.vip
+site_author: Cdm2883
+site_description: 我的中文个人博客 =￣ω￣=
+
+repo_name: Cdm2883/blog
+repo_url: https://github.com/Cdm2883/blog
+edit_uri: edit/main/docs/
+
+copyright: Copyright &copy; 2024 - 2024 Cdm2883
+
 theme:
   name: material
+  custom_dir: overrides
+  language: zh
+  icon:
+    logo: material/book-open
+  # noinspection YAMLSchemaValidation
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: 切换到日间模式
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: 切换到夜间模式
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: 切换到主题跟随系统
+  features:
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - search.share
+    - header.autohide
+    - announce.dismiss
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - content.tooltips
+    - content.action.edit
+    - content.action.view
+
+# noinspection YAMLSchemaValidation
+plugins:
+  - search:
+      lang:
+        - zh
+        - en
+  - blog:
+      blog_dir: .
+      blog_toc: true
+      post_date_format: full
+      archive_date_format: yyyy / MM
+  - tags:
+      tags_file: tags.md
+
+# noinspection YAMLSchemaValidation
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - attr_list
+  - md_in_html
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - footnotes
+  - def_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.arithmatex:
+      generic: true
+  - abbr
+  - pymdownx.critic
+  - pymdownx.caret
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.zhimg.com/mathjax@3.2.2/es5/tex-mml-chtml.js
+
+extra_css:
+  - stylesheets/md-banner.css
+
+extra:
+  social:
+    - icon: simple/bilibili
+      link: https://space.bilibili.com/481934252
+      name: 哔哩哔哩
+    - icon: material/qqchat
+      link: https://qm.qq.com/q/PprH7UV46y
+      name: 腾讯 QQ
+    - icon: material/github
+      link: https://github.com/Cdm2883
+      name: Github
+    - icon: material/email
+      link: mailto:hi@cdms.vip
+      name: 电子邮箱
