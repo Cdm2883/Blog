@@ -62,9 +62,12 @@ plugins:
       blog_dir: .
       blog_toc: true
       post_date_format: full
+      post_url_format: "{date}/{file}"
       archive_date_format: yyyy / MM
   - tags:
       tags_file: tags.md
+  - minify:
+      minify_html: true
 
 # noinspection YAMLSchemaValidation
 markdown_extensions:
