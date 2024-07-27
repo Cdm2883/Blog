@@ -17,7 +17,7 @@ draft: true
 
 ## Compose 实现多平台的奥秘
 
-> 本文不会提及、谈论 iOS 相关的内容 *~~（因为我没干过 Apple 的开发）~~*
+> 本文不会深谈 iOS 相关的内容，若有误请不要喷我 qwq *~~（因为我没干过 Apple 的开发）~~*
 
 Compose 的概念最初出现在 Android 上，作为 Jetpack 的一部分发布，叫做 Jetpack Compose。
 作为一个现代的 UI 构建框架，得益于 Kotlin 优秀的语言特性，它能够使用更少、更直观的代码构建原生 Android 页面。
@@ -59,14 +59,196 @@ graph LR
 
 从整个过程来看 Compose UI 之前的部分都是平台无关的，驱动着一棵节点树的更新，支持着整个 Compose 的运转。
 而 Compose UI 则是与当前平台所关联的，用适合当前平台绘制的方式，管理渲染树和将生成的渲染树给画出来。
-*（其实从这里也可以看出 Compose 不止可以用来构建 UI。
-还记得在 Compose 诞生之初有人拿 Compose 做了一个测试框架，但具体的仓库好像忘记了 :P）*
+<small>*（是不是很像虚拟 Dom 和真实 Dom 的关系 XD。其实从这里也可以看出 Compose 不止可以用来构建 UI。
+还记得在 Compose 诞生之初有人拿 Compose 做了一个测试框架，但具体的仓库好像忘记了 :P）*</small>
 
-Compose Multiplatform 所做的
+借助 Kotlin 多平台的能力，目前 Compose Multiplatform 为多平台所做的，则是为基于 Skia 的 Compose UI 提供各个平台的实现。
+由于都用的同一个渲染引擎（Skia）、同一套节点树和流程，这样就实现了多平台统一风格样式组件的 UI，甚至可以借用 Android 那边已有的通用组件库。
+
+```mermaid
+graph LR
+    ComposeCompiler["Compose Compiler"]
+    ComposeRuntime["Compose Runtime"]
+    ComposeUI["Compose UI"]
+    ComposeCompiler --> ComposeRuntime -- Layout Node --> ComposeUI
+    ComposeUI --> Android["Android (Jetpack Compose)"]
+    ComposeUI --> Desktop
+    ComposeUI --> iOS
+    ComposeUI --> Web["Web (Skia via Kotlin/Wasm)"]
+```
+
+---
+
+实现多平台还有另一种方式 —— **使用平台原生的页面元素**。  
+事实上曾经的 Compose Web *（[现 Compose HTML](https://github.com/JetBrains/compose-multiplatform/commit/59eda00380981b2555cd62d26e8d6f4122a13c40)）*就是这样做的。
+<small>*（通过改名也能看出，JetBrains 团队不希望在 Web 上使用 Compose 会与其他平台过于割裂）*</small>
+```kotlin title="Written in Compose HTML"
+fun main() = renderComposable(rootElementId = "root") { Body() }
+
+@Composable
+fun Body() {
+    var counter by remember { mutableStateOf(0) }
+    Div(attrs = {
+        style {  // css style, not modifier
+            width(20.percent)
+            height(10.percent)
+        }
+    }) {
+        Text("Clicked: ${counter}")
+    }
+    Button(attrs = {
+        style { property("padding", "0px 0px 0px 16px") }
+        onClick { _ -> counter++ }
+    }) {
+        Text("Click")
+    }
+}
+```
+从这一段代码很容易看出，这里虽然沿用了 Compose 的状态管理，但是还是采用了浏览器原生 Dom 来构建的 UI。
+这样做，由于每个平台的差异性，又无法做到 UI 共用一个代码了。
+
+有什么办法消除这种差异？很容易就能想到，用抽象！把每个组件抽象化，再具体在每个平台进行实现。
+而 [Redwood](https://github.com/cashapp/redwood) 就是这么做的：
+
+??? example annotate "示例"
+
+    ```kotlin title="Schema (1)" linenums="1"
+    @Widget(1)
+    data class Button(
+        @Property(1)
+        val text: String?,
+    
+        @Property(2)
+        @Default("true")
+        val enabled: Boolean,
+    
+        @Property(3)
+        val onClick: (() -> Unit)? = null,
+    )
+    ```
+
+    === "Android"
+    
+        ```kotlin linenums="1" hl_lines="2"
+        internal class AndroidButton(
+            override val value: android.widget.Button,
+        ) : Button<View> {
+            override var modifier: /*app.cash.redwood.*/Modifier = Modifier
+            override fun text(text: String?) {
+                value.text = text
+            }
+            override fun enabled(enabled: Boolean) {
+                value.isEnabled = enabled
+            }
+            override fun onClick(onClick: (() -> Unit)?) {
+                value.setOnClickListener(onClick?.let { { onClick() } })
+            }
+        }
+        ```
+    
+    === "Web"
+    
+        ```kotlin linenums="1" hl_lines="2"
+        internal class HtmlButton(
+            override val value: HTMLButtonElement,
+        ) : Button<HTMLElement> {
+            override var modifier: /*app.cash.redwood.*/Modifier = Modifier
+            override fun text(text: String?) {
+                value.textContent = text
+            }
+            override fun enabled(enabled: Boolean) {
+                value.disabled = !enabled
+            }
+            override fun onClick(onClick: (() -> Unit)?) {
+                value.onclick = onClick?.let { { onClick() } }
+            }
+        }
+        ```
+    
+    === "Desktop"
+    
+        ```kotlin linenums="1" hl_lines="8-16"
+        internal class ComposeUiButton : Button<@Composable () -> Unit> {
+            private var text by mutableStateOf("")
+            private var isEnabled by mutableStateOf(false)
+            private var onClick by mutableStateOf({})
+        
+            override var modifier: /*app.cash.redwood.*/Modifier = Modifier
+        
+            override val value = @Composable {
+                androidx.compose.material.Button(
+                    onClick = onClick,
+                    enabled = isEnabled,
+                    modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
+                ) {
+                    Text(text)
+                }
+            }
+        
+            override fun text(text: String?) {
+                this.text = text ?: ""
+            }
+            override fun enabled(enabled: Boolean) {
+                this.isEnabled = enabled
+            }
+            override fun onClick(onClick: (() -> Unit)?) {
+                this.onClick = onClick ?: {}
+            }
+        }
+        ```
+    
+    === "iOS"
+    
+        ```kotlin linenums="1" hl_lines="5-7"
+        // NOTE: This class must be public for the click selector to work.
+        class IosButton : Button<UIView> {
+            override var modifier: /*app.cash.redwood.*/Modifier = Modifier
+            
+            override val value = UIButton().apply {
+                backgroundColor = UIColor.grayColor
+            }
+    
+            override fun text(text: String?) {
+                value.setTitle(text, UIControlStateNormal)
+            } 
+            override fun enabled(enabled: Boolean) {
+                value.enabled = enabled
+            }
+        
+            private val clickedPointer = sel_registerName("clicked")
+            @ObjCAction
+            fun clicked() {
+                onClick?.invoke()
+            }
+            private var onClick: (() -> Unit)? = null
+            override fun onClick(onClick: (() -> Unit)?) {
+                this.onClick = onClick
+                if (onClick != null) {
+                    value.addTarget(this, clickedPointer, UIControlEventTouchUpInside)
+                } else {
+                    value.removeTarget(this, clickedPointer, UIControlEventTouchUpInside)
+                }
+            }
+        }
+        ```
+
+1. Redwood 会自动生成类型安全的 API 供包装。示例代码详情请看：[samples/counter/schema/src/main/kotlin/com/example/redwood/counter/schema.kt](https://github.com/cashapp/redwood/blob/71fc67243dbc39fc3a6d2b579ef10a07e451e7b8/samples/counter/schema/src/main/kotlin/com/example/redwood/counter/schema.kt)
+
+但很显然，这样做工作量可不小，组件库也很难通用。
 
 ## 将 Compose UI 移植到鸿蒙
+
+截至到这篇博文发布，
 
 [//]: # (redwood -> native, e.g.: https://github.com/Compose-for-OpenHarmony/compose-ez-ui)
 [//]: # (https://github.com/cashapp/redwood)
 
 占位
+
+## 参考文献
+
+已经迫不及待想尝试了吗？这些内容可能会对你有帮助！
+
+- awa
+- awa
+- awa
