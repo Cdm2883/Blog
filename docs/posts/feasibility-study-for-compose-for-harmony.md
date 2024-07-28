@@ -232,23 +232,28 @@ fun Body() {
         }
         ```
 
-1. Redwood 会自动生成类型安全的 API 供包装。示例代码详情请看：[samples/counter/schema/src/main/kotlin/com/example/redwood/counter/schema.kt](https://github.com/cashapp/redwood/blob/71fc67243dbc39fc3a6d2b579ef10a07e451e7b8/samples/counter/schema/src/main/kotlin/com/example/redwood/counter/schema.kt)
+1. Redwood 会自动生成类型安全的 API 供包装。例如这个会生成的接口：
+   ```kotlin
+   // ...
+   interface Button<W : Any> : Widget<W> {
+       // ...
+       fun text(text: String?)
+       fun enabled(enabled: Boolean)
+       fun onClick(onClick: (() -> Unit)?)
+   }
+   // ...
+   ```
+   完整示例代码详情请看：[samples/counter/schema/src/main/kotlin/com/example/redwood/counter/schema.kt](https://github.com/cashapp/redwood/blob/71fc67243dbc39fc3a6d2b579ef10a07e451e7b8/samples/counter/schema/src/main/kotlin/com/example/redwood/counter/schema.kt)
 
-但很显然，这样做工作量可不小，组件库也很难通用。
+使用原生组件，会更贴近原生的体验。但很显然，这样做工作量可不小，组件库也很难通用。
 
 ## 将 Compose UI 移植到鸿蒙
 
-截至到这篇博文发布，
+截至到这篇博文发布，其实已经有个人，甚至许多大厂在探索自己的解决方案。
 
-[//]: # (redwood -> native, e.g.: https://github.com/Compose-for-OpenHarmony/compose-ez-ui)
-[//]: # (https://github.com/cashapp/redwood)
+基于原生包装方案的，我找到了使用 Redwood 制作的 [compose-ez-ui](https://github.com/Compose-for-OpenHarmony/compose-ez-ui)。
+纵然这是一次有趣的尝试，但大家更想要的一定会是兼容现有 Compose Multiplatform 生态的实现。也就是说，我们需要用 skia canvas 在鸿蒙上显示。
 
-占位
-
-## 参考文献
-
-已经迫不及待想尝试了吗？这些内容可能会对你有帮助！
-
-- awa
-- awa
-- awa
+据未验证消息，上个月腾讯在深圳的演讲，他们的团队为 OpenHarmony 做了 Skia 的 binding，计划在 2025 年开源。
+现在腾讯视频等应用在鸿蒙版上已经运用了 Kotlin + Compose 的技术，据说美团也有相关的计划。
+快手团队也在探索 KMP 在鸿蒙上的可能，现已在快影等应用使用了相关技术……
