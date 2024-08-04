@@ -1,5 +1,5 @@
 ---
-date: 1919-08-10
+date: 2024-08-05
 tags:
   - Kotlin
   - Compose
@@ -254,6 +254,6 @@ fun Body() {
 基于原生包装方案的，我找到了使用 Redwood 制作的 [compose-ez-ui](https://github.com/Compose-for-OpenHarmony/compose-ez-ui)。
 纵然这是一次有趣的尝试，但大家更想要的一定会是兼容现有 Compose Multiplatform 生态的实现。也就是说，我们需要用 skia canvas 在鸿蒙上显示。
 
-据未验证消息，上个月腾讯在深圳的演讲，他们的团队为 OpenHarmony 做了 Skia 的 binding，计划在 2025 年开源。
+据未验证消息，上上个月腾讯在深圳的演讲，他们的团队为 OpenHarmony 做了 Skia 的 binding，计划在 2025 年开源。
 现在腾讯视频等应用在鸿蒙版上已经运用了 Kotlin + Compose 的技术，据说美团也有相关的计划。
 快手团队也在探索 KMP 在鸿蒙上的可能，现已在快影等应用使用了相关技术……
