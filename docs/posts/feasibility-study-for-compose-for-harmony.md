@@ -1,5 +1,5 @@
 ---
-date: 2024-08-05
+date: 2024-08-18
 tags:
   - Kotlin
   - Compose
@@ -56,6 +56,7 @@ graph LR
 
     - Compose Fundation
     - Compose Material
+    - [OreCompose](https://github/Cdm2883/OreCompose) <small>~~*夹带私货*~~</small>
 
 从整个过程来看 Compose UI 之前的部分都是平台无关的，驱动着一棵节点树的更新，支持着整个 Compose 的运转。
 而 Compose UI 则是与当前平台所关联的，用适合当前平台绘制的方式，管理渲染树和将生成的渲染树给画出来。
@@ -72,14 +73,14 @@ graph LR
     ComposeUI["Compose UI"]
     ComposeCompiler --> ComposeRuntime -- Layout Node --> ComposeUI
     ComposeUI --> Android["Android (Jetpack Compose)"]
-    ComposeUI --> Desktop
-    ComposeUI --> iOS
+    ComposeUI --> Desktop["Desktop (Skiko)"]
+    ComposeUI --> iOS["Desktop (Skiko)"]
     ComposeUI --> Web["Web (Skia via Kotlin/Wasm)"]
 ```
 
 ---
 
-实现多平台还有另一种方式 —— **使用平台原生的页面元素**。  
+Compose 实现多平台还有另一种方式 —— **使用平台原生的页面元素**。  
 事实上曾经的 Compose Web *（[现 Compose HTML](https://github.com/JetBrains/compose-multiplatform/commit/59eda00380981b2555cd62d26e8d6f4122a13c40)）*就是这样做的。
 <small>*（通过改名也能看出，JetBrains 团队不希望在 Web 上使用 Compose 会与其他平台过于割裂）*</small>
 ```kotlin title="Written in Compose HTML"
@@ -107,7 +108,7 @@ fun Body() {
 从这一段代码很容易看出，这里虽然沿用了 Compose 的状态管理，但是还是采用了浏览器原生 Dom 来构建的 UI。
 这样做，由于每个平台的差异性，又无法做到 UI 共用一个代码了。
 
-有什么办法消除这种差异？很容易就能想到，用抽象！把每个组件抽象化，再具体在每个平台进行实现。
+有什么办法消除这种差异？聪明的你很容易就能想到，用抽象！把每个组件抽象化，提取通用部分，再具体在每个平台进行实现。
 而 [Redwood](https://github.com/cashapp/redwood) 就是这么做的：
 
 ??? example annotate "示例"
@@ -245,15 +246,52 @@ fun Body() {
    ```
    完整示例代码详情请看：[samples/counter/schema/src/main/kotlin/com/example/redwood/counter/schema.kt](https://github.com/cashapp/redwood/blob/71fc67243dbc39fc3a6d2b579ef10a07e451e7b8/samples/counter/schema/src/main/kotlin/com/example/redwood/counter/schema.kt)
 
-使用原生组件，会更贴近原生的体验。但很显然，这样做工作量可不小，组件库也很难通用。
+使用原生组件，理所应当会更贴近原生的体验。但很显然，这样做工作量可不小；由于每个人可能对底层抽象模式有不同的标准，组件库也很难做到通用。
 
 ## 将 Compose UI 移植到鸿蒙
 
 截至到这篇博文发布，其实已经有个人，甚至许多大厂在探索自己的解决方案。
 
 基于原生包装方案的，我找到了使用 Redwood 制作的 [compose-ez-ui](https://github.com/Compose-for-OpenHarmony/compose-ez-ui)。
-纵然这是一次有趣的尝试，但大家更想要的一定会是兼容现有 Compose Multiplatform 生态的实现。也就是说，我们需要用 skia canvas 在鸿蒙上显示。
+纵然这是一次有趣的尝试，但大家更想要的一定会是兼容现有 Compose Multiplatform 生态的实现。
+也就是说，我们需要移植 Compose UI，用 skia canvas 在鸿蒙上进行自绘制。
 
-据未验证消息，上上个月腾讯在深圳的演讲，他们的团队为 OpenHarmony 做了 Skia 的 binding，计划在 2025 年开源。
+据未验证消息，上上个月腾讯在深圳的演讲，他们的团队为 OpenHarmony 做了 Skia 的 Binding，计划在 2025 年开源。
 现在腾讯视频等应用在鸿蒙版上已经运用了 Kotlin + Compose 的技术，据说美团也有相关的计划。
 快手团队也在探索 KMP 在鸿蒙上的可能，现已在快影等应用使用了相关技术……
+
+Compose UI 的移植相对会简单不少 *（通用代码较多）*，那我们这里就探讨一下实现 Skia 移植的两个大体方向：
+
+### 使用原生 Skia
+
+但在一切开始之前，我想先提一个在 KotlinConf'24 中由 [Jake Wharton](https://github.com/JakeWharton) 分享的一个有趣的故事……
+
+<!--suppress CssUnusedSymbol, SpellCheckingInspection -->
+<style>
+#composeui-lightswitch-figcaption .md-annotation__index:after {
+    margin-left: -.94ch;
+}
+</style>
+<figure style="width: 100%;margin-top: 2em;" class="annotate">
+    <!--suppress HtmlUnknownAttribute, HtmlDeprecatedAttribute -->
+    <iframe
+        style="border-radius: .1rem;aspect-ratio: 16 / 9;"
+        src="//player.bilibili.com/player.html?isOutside=true&aid=1956437488&bvid=BV1ky411e7ox&cid=1648024007&p=1"
+        width="100%"
+        scrolling="no"
+        border="0"
+        frameborder="no"
+        framespacing="0"
+        allowfullscreen="allowfullscreen">
+    </iframe>
+    <figcaption id="composeui-lightswitch-figcaption" style="max-width: none;">在智能电灯开关上运行 Compose UI：探索 Compose 的嵌入式应用(1)</figcaption>
+</figure>
+
+1. 一些相关的链接：[Github](https://github.com/JakeWharton/composeui-lightswitch)、
+   [BiliBili](https://www.bilibili.com/video/BV1ky411e7ox)、
+   [Youtube](https://youtu.be/D0P5Lb-2uCY)、
+   [Home Assistant Community](https://community.home-assistant.io/t/500842)。
+
+占位
+
+### ArkUI 层实现 Skia
