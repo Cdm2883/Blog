@@ -107,11 +107,11 @@ markdown_extensions:
 
 
 extra_javascript:
-  - javascripts/mathjax.js
+  - assets/javascripts/mathjax.js
   - https://unpkg.zhimg.com/mathjax@3.2.2/es5/tex-mml-chtml.js
 
 extra_css:
-  - stylesheets/md-banner.css
+  - assets/stylesheets/md-banner.css
 
 extra:
   social:
