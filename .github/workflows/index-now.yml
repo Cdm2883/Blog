@@ -1,0 +1,16 @@
+name: IndexNow Indexing
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  check-and-submit:
+    runs-on: ubuntu-latest
+    # noinspection SpellCheckingInspection
+    steps:
+      - name: indexnow-action
+        uses: bojieyang/indexnow-action@v2
+        with:
+          sitemap-location: 'https://blog.cdms.vip/sitemap.xml'
+          key: '193add92666042c0a852734302002324' # Why to use GitHub Secrets?
