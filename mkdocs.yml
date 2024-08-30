@@ -3,8 +3,8 @@ site_url: https://blog.cdms.vip
 site_author: Cdm2883
 site_description: 我的中文个人博客 =￣ω￣=
 
-repo_name: Cdm2883/blog
-repo_url: https://github.com/Cdm2883/blog
+repo_name: Cdm2883/Blog
+repo_url: https://github.com/Cdm2883/Blog
 edit_uri: edit/master/docs/
 
 copyright: Copyright &copy; 2024 - 2024 Cdm2883
@@ -69,7 +69,7 @@ plugins:
   - minify:
       minify_html: true
 
-# noinspection YAMLSchemaValidation
+# noinspection YAMLSchemaValidation, SpellCheckingInspection
 markdown_extensions:
   - admonition
   - pymdownx.details
