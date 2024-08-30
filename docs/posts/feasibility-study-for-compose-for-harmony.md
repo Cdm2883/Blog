@@ -1,5 +1,5 @@
 ---
-date: 2024-08-18
+date: 2024-08-30
 tags:
   - Kotlin
   - Compose
@@ -244,6 +244,7 @@ fun Body() {
    }
    // ...
    ```
+   <br/>
    完整示例代码详情请看：[samples/counter/schema/src/main/kotlin/com/example/redwood/counter/schema.kt](https://github.com/cashapp/redwood/blob/71fc67243dbc39fc3a6d2b579ef10a07e451e7b8/samples/counter/schema/src/main/kotlin/com/example/redwood/counter/schema.kt)
 
 使用原生组件，理所应当会更贴近原生的体验。但很显然，这样做工作量可不小；由于每个人可能对底层抽象模式有不同的标准，组件库也很难做到通用。
@@ -295,4 +296,4 @@ Compose UI 的移植相对会简单不少<small>*（很多通用代码和包装�
 
 占位
 
-### ArkUI 层实现 Skia
+### 在 ArkUI 层实现 Skia
