@@ -1,0 +1,3 @@
+.md-search-result__item:not(:has(:last-child.md-search-result__more)) .md-search-result__article :last-child.md-tag {
+    margin-bottom: 0.55rem
+}

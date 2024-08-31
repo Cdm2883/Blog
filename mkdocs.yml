@@ -58,12 +58,28 @@ plugins:
       lang:
         - zh
         - en
+        - ja
+      separator: '[\s\u200b\-]'
   - blog:
       blog_dir: .
       blog_toc: true
       post_date_format: full
       post_url_format: "{date}/{file}"
       archive_date_format: yyyy / MM
+      categories_slugify: !!python/object/apply:ext.categories_slug.slugify {}
+      categories_allowed:
+        - 技术
+        - 绘画
+        - 日常
+      categories_toc: true
+  - rss:
+      match_path: ^posts[\\/].*
+      date_from_meta:
+        as_creation: date
+      categories:
+        - categories
+        - tags
+      comments_path: "#__comments"
   - tags:
       tags_file: tags.md
   - minify:
@@ -71,39 +87,39 @@ plugins:
 
 # noinspection YAMLSchemaValidation, SpellCheckingInspection
 markdown_extensions:
-  - admonition
-  - pymdownx.details
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
-  - attr_list
-  - md_in_html
-  - pymdownx.highlight:
-      anchor_linenums: true
-      line_spans: __span
-      pygments_lang_class: true
-  - pymdownx.inlinehilite
-  - pymdownx.snippets
   - pymdownx.tabbed:
       alternate_style: true
-  - tables
-  - footnotes
-  - def_list
   - pymdownx.tasklist:
       custom_checkbox: true
-  - pymdownx.arithmatex:
-      generic: true
-  - abbr
-  - pymdownx.critic
   - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.inlinehilite
   - pymdownx.keys
   - pymdownx.mark
+  - pymdownx.snippets
   - pymdownx.tilde
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
 
 
 extra_javascript:
@@ -112,9 +128,14 @@ extra_javascript:
 
 extra_css:
   - assets/stylesheets/md-banner.css
+  - assets/stylesheets/md-search.css
+  - assets/stylesheets/md-post.css
 
 extra:
   social:
+    - icon: material/rss
+      link: /feed_rss_created.xml
+      name: RSS 订阅
     - icon: simple/bilibili
       link: https://space.bilibili.com/481934252
       name: 哔哩哔哩
