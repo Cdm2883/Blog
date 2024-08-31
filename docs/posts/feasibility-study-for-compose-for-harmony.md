@@ -1,5 +1,5 @@
 ---
-date: 2024-08-31
+date: 2024-09-01
 categories:
   - 技术
 tags:
@@ -110,7 +110,7 @@ fun Body() {
 从这一段代码很容易看出，这里虽然沿用了 Compose 的状态管理，但是还是采用了浏览器原生 Dom 来构建的 UI。
 这样做，由于每个平台的差异性，又无法做到 UI 共用一个代码了。
 
-有什么办法消除这种差异？聪明的你很容易就能想到，用抽象！把每个组件抽象化，提取通用部分，再具体在每个平台进行实现。
+有什么办法消除这种差异？聪明的你很容易就能想到，可以用抽象的思想！把每个组件抽象化，提取通用部分，再具体在每个平台进行实现。
 而 [Redwood](https://github.com/cashapp/redwood) 就是这么做的：
 
 ??? example annotate "示例"
@@ -259,16 +259,22 @@ fun Body() {
 纵然这是一次有趣的尝试，但大家更想要的一定会是兼容现有 Compose Multiplatform 生态的实现。
 也就是说，我们需要移植 Compose UI，用 skia canvas 在鸿蒙上进行自绘制。
 
-据未验证消息，上上个月腾讯在深圳的演讲，他们的团队为 OpenHarmony 做了 Skia 的 Binding，计划在 2025 年开源。
-现在腾讯视频等应用在鸿蒙版上已经运用了 Kotlin + Compose 的技术，据说美团也有相关的计划。
+据未验证消息，上上上个月(1)腾讯在深圳的演讲，透露了他们的团队正在为 OpenHarmony 做 Skia 的 Binding，计划在 2025 年开源。
+而且腾讯视频等应用在其鸿蒙版上早已运用了 Kotlin + Compose 的技术，据说美团也有相关的研究。
 快手团队也在探索 KMP 在鸿蒙上的可能，现已在快影等应用使用了相关技术……
+{ .annotate }
+
+1. 啊啊啊这篇博文托更好几个月了<small>*（因为学业和我太懒）逃）*</small>，这个时间反复改了好几次
 
 Compose UI 的移植相对会简单不少<small>*（很多通用代码和包装）*</small>，
 那我们这里就探讨一下对设备 Skia 进行绑定的几个大体方向：
 
 ### 使用原生 Skia
 
-但在一切开始之前，我想先提一个在 KotlinConf'24 中由 [Jake Wharton](https://github.com/JakeWharton) 分享的一个有趣的故事……
+但在一切开始之前，我想先提一个在 KotlinConf'24 中由 [Jake Wharton](https://github.com/JakeWharton)(1) 分享的一个有趣的故事……
+{ .annotate }
+
+1. Jake Wharton（Cash App Android 工程师）。同时，Redwood 也是 Cash App 的开源项目。
 
 <!--suppress CssUnusedSymbol, SpellCheckingInspection -->
 <style>
@@ -296,6 +302,35 @@ Compose UI 的移植相对会简单不少<small>*（很多通用代码和包装�
    [Youtube](https://youtu.be/D0P5Lb-2uCY)、
    [Home Assistant Community](https://community.home-assistant.io/t/500842)。
 
-占位
+视频较长，在这里我就简单总结一下：
+
+讲师的朋友在亚马逊发现了一个存在未加密 ADB 接口的智能开关设备，并且可以轻松地获得 Root 权限。
+这引发了讲师的兴趣，促使了他购买该设备并尝试探索在其上使用 Compose 构建出自己的用户界面[^1]。
+
+探索的过程中他发现设备运行的是一个简化的 Linux 系统，而不是安卓。所以他首先尝试在设备上运行 JVM，
+并测试了简单的 "Hello World" 程序，证明了设备可以支持 JVM，这让他信心倍增。
+
+但在尝试直接在设备上运行 Compose Desktop (JVM) 时，讲师遇到了诸多挑战。
+首先 [Skiko](https://github.com/JetBrains/skiko) 很快发出了不满的声音：
+`libGL.so.1: connot open shared object file: No such file or directory`。
+
+[//]: # (这说明 不完整 非常规 OpenGL)
+[//]: # (但是 Flutter also based on skia but can run)
+
+[^1]:
+    朋友原话：
+
+    btw. new home automation side project:
+    I bought [one of these]() and have been trying to get my own app installed on it.
+    Super cheap hardware with exactly the design I want,
+    but Chinese servers and no Home Assistant support (hence the custom app).
+
+    Someone discovered it has an ADB server running with no password and root access,
+    so getting into the device is simple. Turns out though, I don't think it's AOSP.
+    It's some stripped down Linux install that happens to have adbd running.
+
+    Been a fun project so far. I might have questions..
 
 ### 在 ArkUI 层实现 Skia
+
+占位
