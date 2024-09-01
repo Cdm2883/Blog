@@ -85,6 +85,12 @@ plugins:
   - statistics:
       page_statistics: false
       page_read_time: false
+  - # noinspection SpellCheckingInspection
+    git-revision-date-localized:
+      type: timeago
+      locale: zh
+      exclude:
+        - tags.md
   - minify:
       minify_html: true
 
