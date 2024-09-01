@@ -91,6 +91,7 @@ plugins:
       locale: zh
       exclude:
         - tags.md
+  - meta-descriptions
   - minify:
       minify_html: true
 
