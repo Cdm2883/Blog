@@ -82,6 +82,9 @@ plugins:
       comments_path: "#__comments"
   - tags:
       tags_file: tags.md
+  - statistics:
+      page_statistics: false
+      page_read_time: false
   - minify:
       minify_html: true
 
