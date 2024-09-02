@@ -1,5 +1,5 @@
 ---
-date: 2024-09-01
+date: 2024-09-03
 categories:
   - 技术
 tags:
@@ -302,7 +302,7 @@ Compose UI 的移植相对会简单不少<small>*（很多通用代码和包装�
    [Youtube](https://youtu.be/D0P5Lb-2uCY)、
    [Home Assistant Community](https://community.home-assistant.io/t/500842)。
 
-视频较长，在这里我就简单总结一下：
+视频较长，在这里我就简要地总结一下：
 
 讲师的朋友在亚马逊发现了一个存在未加密 ADB 接口的智能开关设备，并且可以轻松地获得 Root 权限。
 这引发了讲师的兴趣，促使了他购买该设备并尝试探索在其上使用 Compose 构建出自己的用户界面[^1]。
@@ -313,11 +313,24 @@ Compose UI 的移植相对会简单不少<small>*（很多通用代码和包装�
 但在尝试直接在设备上运行 Compose Desktop (JVM) 时，讲师遇到了诸多挑战。
 首先 [Skiko](https://github.com/JetBrains/skiko) 很快发出了不满的声音：
 `libGL.so.1: connot open shared object file: No such file or directory`。
+这说明设备上的 OpenGL 是 OpenGL ES、不完整或非常规的。
+并且 Compose Desktop 使用了 Swing (AWT)，AWT Linux 默认情况下依赖于 X11 等桌面环境，显然这个小小的开关是没有这些东西的。
+
+那该智能开关的原界面是怎样绘制的？
+该智能开关的原程序是使用 Flutter 编写的，而 Flutter 是基于 Skia 进行绘制的，在当前设备上则是用的 DRM 作为后端。
+
+几经转折，讲师找到了 [Linux_DRM_OpenGLES.c](https://gist.github.com/Miouyouyou/89e9fe56a2c59bce7d4a18a858f389ef)
+并成功在设备上运行了，但这些都是 C 代码，而这里是 **Kotlin**Conf，
+所以讲师又尝试了 Kotlin/Native 的 Hello World，事实证明这可以编译运行，这使他大致知道了他应该怎么做。
+
+他又花费了几周的时间用 Kotlin/Native 重写了 Linux_DRM_OpenGLES.c，一切又回到了开头，但这次是使用 Kotlin。
+
 
 [//]: # (这说明 不完整 非常规 OpenGL)
 [//]: # (但是 Flutter also based on skia but can run)
 
 [^1]:
+
     朋友原话：
 
     btw. new home automation side project:
