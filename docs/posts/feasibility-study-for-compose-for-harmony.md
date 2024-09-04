@@ -1,5 +1,5 @@
 ---
-date: 2024-09-04
+date: 2024-09-05
 categories:
   - 技术
 tags:
@@ -65,8 +65,8 @@ graph LR
 <small>*（是不是很像虚拟 Dom 和真实 Dom 的关系 XD。其实从这里也可以看出 Compose 不止可以用来构建 UI。
 还记得在 Compose 诞生之初有人拿 Compose 做了一个测试框架，但具体的仓库好像忘记了 :P）*</small>
 
-借助 Kotlin 多平台的能力，目前 Compose Multiplatform 为多平台所做的，则是为基于 Skia 的 Compose UI 提供各个平台的实现。
-由于都用的同一个渲染引擎（Skia）、同一套节点树和流程，这样就实现了多平台统一风格样式组件的 UI，甚至可以借用 Android 那边已有的通用组件库。
+JetBrains 团队创建的 Compose Multiplatform 项目则利用这一点，借助 Kotlin 的多平台能力，厚积薄发，为基于 Skia 的 Compose UI 提供各个平台相应的绑定。
+由于都用的同一个渲染引擎（Skia）、同一套节点树和流程，这样就实现了多平台统一风格样式组件的 UI，甚至可以借用 Android *(Jetpack Compose)* 那边[已有的](https://github.com/JetBrains/compose-multiplatform-core)通用组件库。
 
 ```mermaid
 graph LR
@@ -317,14 +317,13 @@ Compose UI 的移植相对会简单不少<small>*（很多通用代码和包装�
 并且 Compose Desktop 使用了 Swing (AWT)，AWT Linux 默认情况下依赖于 X11 等桌面环境，显然这个小小的开关是没有这些东西的。
 
 那该智能开关的原界面是怎样绘制的？
-该智能开关的原程序是使用 Flutter 编写的，而 Flutter 是基于 Skia 进行绘制的，在当前设备上则是用的 DRM 作为后端。
+该智能开关的原界面是通过 Flutter 构建的。Flutter 使用 Skia 作为图形引擎，而在当前设备上用的 OpenGL ES 作为后端，并最终通过 DRM 直接输出渲染结果到显示设备。
 
 几经转折，讲师找到了 [Linux_DRM_OpenGLES.c](https://gist.github.com/Miouyouyou/89e9fe56a2c59bce7d4a18a858f389ef)
 并成功在设备上运行了，但这些都是 C 代码，而这里是 **Kotlin**Conf，
 所以讲师又尝试了 Kotlin/Native 的 Hello World，事实证明这可以编译运行，这使他大致知道了他应该怎么做。
 
-他又花费了几周的时间用 Kotlin/Native 重写了 Linux_DRM_OpenGLES.c，一切又回到了开头，但这次是使用 Kotlin。
-
+他又花费了几周的时间用 Kotlin/Native 重写了全部逻辑，一切好似又回到了开头，但这次是使用 Kotlin 来构建所需的一切。
 
 [//]: # (这说明 不完整 非常规 OpenGL)
 [//]: # (但是 Flutter also based on skia but can run)
