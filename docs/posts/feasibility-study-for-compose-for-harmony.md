@@ -1,5 +1,5 @@
 ---
-date: 2024-09-05
+date: 2024-09-06
 categories:
   - 技术
 tags:
@@ -324,6 +324,8 @@ Compose UI 的移植相对会简单不少<small>*（很多通用代码和包装�
 所以讲师又尝试了 Kotlin/Native 的 Hello World，事实证明这可以编译运行，这使他大致知道了他应该怎么做。
 
 他又花费了几周的时间用 Kotlin/Native 重写了全部逻辑，一切好似又回到了开头，但这次是使用 Kotlin 来构建所需的一切。
+是时候让事情变得有趣了！为了在 Kotlin/Native 方便地使用 Skia 同时为后面对接 Compose UI 做准备，还是回到了 Skiko 项目。
+
 
 [//]: # (这说明 不完整 非常规 OpenGL)
 [//]: # (但是 Flutter also based on skia but can run)
