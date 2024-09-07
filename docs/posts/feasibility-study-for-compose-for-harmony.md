@@ -1,5 +1,5 @@
 ---
-date: 2024-09-07
+date: 2024-09-08
 categories:
   - 技术
 tags:
@@ -342,7 +342,7 @@ Compose UI 自身的多平台渲染同样也是归功于 Skiko 的强大赋能�
 因为基本上 Skia 的编译设置只能让宿主机做为编译目标。所以在他的 Mac 上可以为 macOS 编译，在他的 Linux X64 服务器上可以为 Linux X64 编译。
 那么好吧，他需要编译 Linux ARM，结果在他的树莓派上尝试后发现 Kotlin **本身**不能在 Linux ARM 上运行。
 因此讲师创建了一个 docker 容器，用 QUME 模拟 Linux ARM，在这里进行编译。  
-几个月的时间都被花费在了这里，但庆幸的是最终它经过许多痛苦后成功了。
+虽然几个月的时间都被花费在了这里，但庆幸的是最终它经过许多痛苦后成功了。
 
 渲染固然重要，但缺少触摸交互就失去了不少趣味。讲师花了一点时间弄清这个设备的触摸事件，并用 Kotlin/Native 捕获。
 现在，是时候把一切都组合在一起了！他 Fork 了 [compose-multiplatform-core](https://github.com/JetBrains/compose-multiplatform-core)，
