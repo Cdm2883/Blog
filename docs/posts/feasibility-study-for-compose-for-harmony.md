@@ -1,5 +1,5 @@
 ---
-date: 2024-09-06
+date: 2024-09-07
 categories:
   - 技术
 tags:
@@ -255,19 +255,19 @@ fun Body() {
 
 截至到这篇博文发布，其实已经有个人，甚至许多大厂在探索自己的解决方案。
 
-基于原生包装方案的，我找到了使用 Redwood 制作的 [compose-ez-ui](https://github.com/Compose-for-OpenHarmony/compose-ez-ui)。
+我找到了一个使用原生包装方案的项目 —— [compose-ez-ui](https://github.com/Compose-for-OpenHarmony/compose-ez-ui)，它也是通过 Redwood 实现的。
 纵然这是一次有趣的尝试，但大家更想要的一定会是兼容现有 Compose Multiplatform 生态的实现。
 也就是说，我们需要移植 Compose UI，用 skia canvas 在鸿蒙上进行自绘制。
 
-据未验证消息，上上上个月(1)腾讯在深圳的演讲，透露了他们的团队正在为 OpenHarmony 做 Skia 的 Binding，计划在 2025 年开源。
-而且腾讯视频等应用在其鸿蒙版上早已运用了 Kotlin + Compose 的技术，据说美团也有相关的研究。
-快手团队也在探索 KMP 在鸿蒙上的可能，现已在快影等应用使用了相关技术……
+据未经证实的消息，上上上个月(1)腾讯在深圳的演讲，透露了他们的团队正在为 OpenHarmony 做 Skia 的 Binding，并计划在 2025 年开源。
+此外，腾讯视频等应用的鸿蒙版本中早已运用了 Kotlin + Compose 的技术，据传美团也有在做相关的研究。
+快手团队也在探索 KMP 在鸿蒙上的可能，现已在快影等应用应用了相关技术……
 { .annotate }
 
 1. 啊啊啊这篇博文托更好几个月了<small>*（因为学业和我太懒）逃）*</small>，这个时间反复改了好几次
 
-Compose UI 的移植相对会简单不少<small>*（很多通用代码和包装）*</small>，
-那我们这里就探讨一下对设备 Skia 进行绑定的几个大体方向：
+相对而言，Compose UI 的移植相对会简单不少<small>*（由于许多通用代码和包装）*</small>，
+所以接下来我们就探讨一下对设备 Skia 进行绑定（Skiko）的几个可行方法：
 
 ### 使用原生 Skia
 
@@ -302,7 +302,7 @@ Compose UI 的移植相对会简单不少<small>*（很多通用代码和包装�
    [Youtube](https://youtu.be/D0P5Lb-2uCY)、
    [Home Assistant Community](https://community.home-assistant.io/t/500842)。
 
-视频较长，在这里我就简要地总结一下：
+视频较长，在这里我就简要地描述一下：
 
 讲师的朋友在亚马逊发现了一个存在未加密 ADB 接口的智能开关设备，并且可以轻松地获得 Root 权限。
 这引发了讲师的兴趣，促使了他购买该设备并尝试探索在其上使用 Compose 构建出自己的用户界面[^1]。
@@ -314,7 +314,7 @@ Compose UI 的移植相对会简单不少<small>*（很多通用代码和包装�
 首先 [Skiko](https://github.com/JetBrains/skiko) 很快发出了不满的声音：
 `libGL.so.1: connot open shared object file: No such file or directory`。
 这说明设备上的 OpenGL 是 OpenGL ES、不完整或非常规的。
-并且 Compose Desktop 使用了 Swing (AWT)，AWT Linux 默认情况下依赖于 X11 等桌面环境，显然这个小小的开关是没有这些东西的。
+并且 Compose Desktop 使用了 Swing (AWT)，AWT Linux 默认情况下依赖于 X11 等桌面环境，显然这个小小的开关是没有这些东西的[^2]。
 
 那该智能开关的原界面是怎样绘制的？
 该智能开关的原界面是通过 Flutter 构建的。Flutter 使用 Skia 作为图形引擎，而在当前设备上用的 OpenGL ES 作为后端，并最终通过 DRM 直接输出渲染结果到显示设备。
@@ -324,11 +324,39 @@ Compose UI 的移植相对会简单不少<small>*（很多通用代码和包装�
 所以讲师又尝试了 Kotlin/Native 的 Hello World，事实证明这可以编译运行，这使他大致知道了他应该怎么做。
 
 他又花费了几周的时间用 Kotlin/Native 重写了全部逻辑，一切好似又回到了开头，但这次是使用 Kotlin 来构建所需的一切。
-是时候让事情变得有趣了！为了在 Kotlin/Native 方便地使用 Skia 同时为后面对接 Compose UI 做准备，还是回到了 Skiko 项目。
+是时候让事情变得有趣了！为了在 Kotlin/Native 方便地使用 Skia 同时为后面对接 Compose UI 做准备，还是回到了 Skiko 项目。  
+Skiko 是什么？
+它自称是 Skia 的 Kotlin 多平台绑定，不仅支持常规的 Kotlin/JVM，
+甚至支持用 WASM 在浏览器中运行和用 Kotlin/Native 在苹果设备中运行。
+Compose UI 自身的多平台渲染同样也是归功于 Skiko 的强大赋能。所以在这台设备上成功部署 Skiko 至关重要。
 
+但不幸的是，它不能就这样被立起来直接用，Skiko 目前不支持 Kotlin/Native 在 Linux 平台的绑定。
+既然支持用 Kotlin/Native 在 iOS 和 macOS 中运行，Linux 应该不会太难吧？讲师这样想着。  
+与 Skiko 关联的还有一个重要的仓库 [skia-pack](https://github.com/JetBrains/skia-pack)。
+它使用 Gtihub Actions 来为 Skiko 构建所需的产物。但他们只构建 OpenGL，而不是 OpenGL ES。
+所以讲师自己动手 Fork 了仓库，修改了构建脚本，一切顺利，所以我们可以回到 Skiko 并尝试集成它。
 
-[//]: # (这说明 不完整 非常规 OpenGL)
-[//]: # (但是 Flutter also based on skia but can run)
+讲师又 Fork 了 Skiko 并“照猫画虎”地将 `GL` 字样用 `EGL` 补充了并增加了 Linux ARM 作为编译目标。
+通常 Skiko 的构建脚本会从 Skia 包仓库（skia-pack）下载所需的依赖项，所以他又手动指定了让脚本从他 Fork 的分支中下载。
+最后一件事，它是如何实际将 C++ 代码为 ARM Linux 编译的？它原本被设定为 clang++，但现在不得不将其更改为不同的脚本。
+因为基本上 Skia 的编译设置只能让宿主机做为编译目标。所以在他的 Mac 上可以为 macOS 编译，在他的 Linux X64 服务器上可以为 Linux X64 编译。
+那么好吧，他需要编译 Linux ARM，结果在他的树莓派上尝试后发现 Kotlin **本身**不能在 Linux ARM 上运行。
+因此讲师创建了一个 docker 容器，用 QUME 模拟 Linux ARM，在这里进行编译。  
+几个月的时间都被花费在了这里，但庆幸的是最终它经过许多痛苦后成功了。
+
+渲染固然重要，但缺少触摸交互就失去了不少趣味。讲师花了一点时间弄清这个设备的触摸事件，并用 Kotlin/Native 捕获。
+现在，是时候把一切都组合在一起了！他 Fork 了 [compose-multiplatform-core](https://github.com/JetBrains/compose-multiplatform-core)，
+并顺着依赖树逐步实现该平台的 `actuals`，终于到达了能够编译的时候。
+他回到了他的应用，将低级的 Skia 调用替换了 Compose，并将触摸事件传递给 Compose。很快，智能开关上的第一个 Compose 页面诞生了！
+他继续优化和美化了页面设计，但这还不是终点。
+
+讲师表示这就像虽然这段旅程接近尾声，但还没有越过终点线，因为它最终还是一个开关。这是一些串口通信的事，不在本文的讨论范围，所以就不多加赘述了。
+
+最后是关于 Skiko Linux 支持的事情。Skiko 对其他平台有绑定是因为其他平台有相对统一的桌面管理/显示系统，
+例如 JVM 有 AWT，苹果有 SwiftUI 等等。
+讲师也不希望能够直接支持，因为 Linux 的情况要复杂得多，可能存在多种显示系统，比如 X11、Wayland，甚至直接渲染（DRM）或其他更独特的方式。
+
+至此，演讲结束。
 
 [^1]:
 
@@ -345,6 +373,28 @@ Compose UI 的移植相对会简单不少<small>*（很多通用代码和包装�
 
     Been a fun project so far. I might have questions..
 
+[^2]:
+   **Eric Firestone:** I assume skiko is skia? Which Flutter also uses, right? So it's probably on here
+   <br/>
+   **Jake Wharton:** kotlin skia wrapper, yes
+   <br/>
+   **Eric Firestone:** I'll keep poking. IibGLES[12].so is on the system. Wonder if that's usable.
+   <br/>
+   **Jake Wharton:** unfortunately it looks like the JVM support for Compose UI relies on AWT which requires X11
+   <br/>
+   **Jake Wharton:** i think we need to set the jvm to headless mode and then somehow initialize a gl context for the whOIdisplay and bind to that  
+   because the normal codepaths just aren't going to work
+   <br/>
+   **eric:** That was exactly my thought too. Didn't know about headless mode, but for the OpenGL context.
+
 ### 在 ArkUI 层实现 Skia
+
+本文提到了这么多次 Skia，你可能会想问：Skia 到底是什么?
+
+[//]: # (Skia 是什么 到处运行 多后端 超强兼容性)
+
+[//]: # (遗憾的是 WASM HMOS 不支持)
+
+[//]: # (wasm2js)
 
 占位
