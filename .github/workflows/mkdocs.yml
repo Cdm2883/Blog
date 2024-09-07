@@ -8,18 +8,34 @@ jobs:
   build:
     name: Deploy docs
     runs-on: ubuntu-latest
-    # noinspection SpellCheckingInspection
     steps:
       - name: Checkout master
         uses: actions/checkout@v1
         with:
+          submodules: true
           fetch-depth: 0
 
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=$GITHUB_WORKSPACE:$PYTHONPATH" >> $GITHUB_ENV
 
-      - name: Deploy docs
-        uses: mhausenblas/mkdocs-deploy-gh-pages@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REQUIREMENTS: requirements.txt
+      - name: Install local plugins
+        run: |
+          for dir in plugins/*; do
+            pip install -e "$dir"
+          done
+
+      - name: Install pip plugins
+        run: pip install -r requirements.txt
+
+      - name: Install Material for MkDocs
+        run: pip install mkdocs-material[recommended]
+
+      - name: Build docs
+        run: mkdocs build
+
+      - name: Deploy docs to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          force_orphan: true

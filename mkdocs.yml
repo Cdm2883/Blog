@@ -83,8 +83,9 @@ plugins:
   - tags:
       tags_file: tags.md
   - statistics:
-      page_statistics: false
       page_read_time: false
+      page_template: ../overrides/page_statistics.html
+      include_path: ^posts[\\/].*
   - # noinspection SpellCheckingInspection
     git-revision-date-localized:
       type: timeago

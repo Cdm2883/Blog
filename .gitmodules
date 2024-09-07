@@ -1,0 +1,4 @@
+[submodule "plugins/mkdocs-statistics-plugin"]
+	path = plugins/mkdocs-statistics-plugin
+	url = https://github.com/Cdm2883/mkdocs-statistics-plugin.git
+	branch = develop-1
