@@ -130,6 +130,12 @@ markdown_extensions:
   - footnotes
   - md_in_html
   - tables
+  - toc:
+      permalink: true
+      permalink_title: 获取此部分的链接
+#      slugify: !!python/object/apply:pymdownx.slugs.slugify
+#        kwds:
+#          case: lower
 
 
 extra_javascript:
