@@ -356,14 +356,24 @@ Compose UI 自身的多平台渲染同样也是归功于 Skiko 的强大赋能�
 例如 JVM 有 AWT，苹果有 SwiftUI 等等。
 讲师也不希望能够直接支持，因为 Linux 的情况要复杂得多，可能存在多种显示系统，比如 X11、Wayland，甚至直接渲染（DRM）或其他更独特的方式。
 
+---
+
 至此，演讲结束。这段演讲不仅是探索 Compose 在嵌入式的应用，也很好地展示了为 Compose Multiplatform 兼容一个新平台的大概步骤。
+我们是否能使用类似的方法，为鸿蒙系统提供 Compose Multiplatform 的支持？
+
+很遗憾，我目前并未看到走此路线的已公开项目。笔者的电脑也无法构建像 Skiko 这样如此庞大的项目(1)，因此这里我无法拿出具体的代码进行演示。
+{ .annotate }
+
+1. 我也曾多次尝试为 Window X64 编写 Compose Multiplatform 的 Kotlin/Native 支持（就像 macOS 的预览功能一样）， 
+   但是在拉取 Skiko 编译时，发现其中有使用 JetBrains 的内部插件处理代码发布的任务，我无法拉取相关插件。
+   在去除相关代码后，还是因为电脑空间不足被迫停止了研究（笑）。
 
 [^1]:
 
     朋友原话：
 
     btw. new home automation side project:
-    I bought [one of these]() and have been trying to get my own app installed on it.
+    I bought [one of these](javascript:footer_link_one_of_these()) and have been trying to get my own app installed on it.
     Super cheap hardware with exactly the design I want,
     but Chinese servers and no Home Assistant support (hence the custom app).
 
@@ -372,6 +382,12 @@ Compose UI 自身的多平台渲染同样也是归功于 Skiko 的强大赋能�
     It's some stripped down Linux install that happens to have adbd running.
 
     Been a fun project so far. I might have questions..
+
+<script>
+function footer_link_one_of_these() {
+    alert("你其实可以从本文的其他地方拿到这个链接")
+}
+</script>
 
 [^2]:
    **Eric Firestone:** I assume skiko is skia? Which Flutter also uses, right? So it's probably on here
