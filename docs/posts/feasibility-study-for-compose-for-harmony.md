@@ -1,11 +1,10 @@
 ---
-date: 2024-10-05
+date: 2024-10-06
 categories:
   - 技术
 tags:
   - Kotlin
   - Compose
-draft: true
 ---
 
 # 将 Compose Multiplatform 移植到 OpenHarmony 的可行性研究
@@ -307,21 +306,21 @@ fun Body() {
 讲师的朋友在亚马逊发现了一个存在未加密 ADB 接口的智能开关设备，并且可以轻松地获得 Root 权限。
 这引发了讲师的兴趣，促使了他购买该设备并尝试探索在其上使用 Compose 构建出自己的用户界面[^1]。
 
-探索的过程中他发现设备运行的是一个简化的 Linux 系统，而不是安卓。所以他首先尝试在设备上运行 JVM，
+探索的过程中他发现设备其实运行的是一个简化的 Linux 系统，而不是安卓。所以他首先尝试在设备上运行 JVM，
 并测试了简单的 "Hello World" 程序，证明了设备可以支持 JVM，这让他信心倍增。
 
-但在尝试直接在设备上运行 Compose Desktop (JVM) 时，讲师遇到了诸多挑战。
+但在尝试直接在设备上运行 Compose Desktop (JVM) 时，他遇到了诸多挑战。
 首先 [Skiko](https://github.com/JetBrains/skiko) 很快发出了不满的声音：
 `libGL.so.1: connot open shared object file: No such file or directory`。
-这说明设备上的 OpenGL 是 OpenGL ES、不完整或非常规的。
-并且 Compose Desktop 使用了 Swing (AWT)，AWT Linux 默认情况下依赖于 X11 等桌面环境，显然这个小小的开关是没有这些东西的[^2]。
+这说明设备上并没有常规或完整的 OpenGL。
+并且 Compose Desktop 还使用了 Swing (AWT)，AWT Linux 默认情况下需要依赖于 X11 等桌面环境，显然这个小小的开关是没有这些东西的[^2]。
 
 那该智能开关的原界面是怎样绘制的？
-该智能开关的原界面是通过 Flutter 构建的。Flutter 使用 Skia 作为图形引擎，而在当前设备上用的 OpenGL ES 作为后端，并最终通过 DRM 直接输出渲染结果到显示设备。
+他之前就已发现该智能开关的原界面其实是通过 Flutter 构建的。Flutter 同样使用 Skia 作为图形引擎，而在当前设备上用的 OpenGL ES 加速绘制，并最终通过 DRM 直接输出渲染结果到显示设备。
 
 几经转折，讲师找到了 [Linux_DRM_OpenGLES.c](https://gist.github.com/Miouyouyou/89e9fe56a2c59bce7d4a18a858f389ef)
-并成功在设备上运行了，但这些都是 C 代码，而这里是 **Kotlin**Conf，
-所以讲师又尝试了 Kotlin/Native 的 Hello World，事实证明这可以编译运行，这使他大致知道了他应该怎么做。
+并成功在设备上运行了这段绘制代码。但这些都是 C 代码，而这里是 **Kotlin**Conf，
+所以讲师又尝试在设备上跑了 Kotlin/Native 的 Hello World，事实证明这可以编译运行，这使他大致知道了他应该怎么做。
 
 他又花费了几周的时间用 Kotlin/Native 重写了全部逻辑，一切好似又回到了开头，但这次是使用 Kotlin 来构建所需的一切。
 是时候让事情变得有趣了！为了在 Kotlin/Native 方便地使用 Skia 同时为后面对接 Compose UI 做准备，还是回到了 Skiko 项目。  
