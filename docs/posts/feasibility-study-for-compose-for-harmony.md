@@ -421,8 +421,8 @@ Skia 甚至能够作为 WASM 模块在浏览器中运行，这也是支撑 Compo
 理论上是可行的，但是目前在鸿蒙上只能是个**玩具**。JS 的**运行效率**相较于原生真是太差劲了！更何况这是一个可能计算密集的图形引擎。
 
 <figure markdown="span">
-    ![awa](https://kotlinlang.org/docs/images/wasm-performance-compose.png)
-    <figcaption>Kotlin/Wasm performance</figcaption>
+    ![Kotlin/Wasm performance](https://kotlinlang.org/docs/images/wasm-performance-compose.png)
+    <figcaption>[Kotlin/Wasm performance](https://kotlinlang.org/docs/wasm-overview.html#kotlin-wasm-performance)</figcaption>
 </figure>
 
 Compose Web 其实尝试过用 JS 作为 Skia 的实现语言，但是很快就取消了。
