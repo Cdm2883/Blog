@@ -404,12 +404,34 @@ function footer_link_one_of_these() {
 
 ### 在 ArkUI 层实现 Skia
 
-本文提到了这么多次 Skia，你可能会想问：Skia 到底是什么?
+本文到现在已经至少出现了有 15 次 `Skia` 字样！那么你可能会想问：Skia 到底是什么？
 
-[//]: # (Skia 是什么 到处运行 多后端 超强兼容性)
+> Skia 是一个开源 2D 图形库，它提供适用于各种硬件和软件平台的通用 API。
+> 它被用作 Google Chrome 和 ChromeOS、Android、Flutter 和许多其他产品的图形引擎。
+> <footer>—— 译自 [Skia](https://skia.org) 官网首页</footer>
 
-[//]: # (遗憾的是 WASM HMOS 不支持)
+由于具备跨平台运行能力、支持多种后端以及出色的兼容性，Skia 也被选为 Compose Multiplatform 的渲染引擎。
 
-[//]: # (wasm2js)
+Skia 甚至能够作为 WASM 模块在浏览器中运行，这也是支撑 Compose Web 运行的法宝。
 
-占位
+事实上绝大部分浏览器都是用的 Skia 作为图形引擎。但是由于脚本的缘故，这些接口并未在用户脚本层暴露出来，所以我们无法在 JS 中使用相关功能。
+所以说再在用户层重写实现一个 Skia 还是有必要的。
+
+我们是否也能在 ArkUI 层实现一个 Skia 的 API 呢？哪怕只是一个接口的简单 wrapper？  
+理论上是可行的，但是目前在鸿蒙上只能是个**玩具**。JS 的**运行效率**相较于原生真是太差劲了！更何况这是一个可能计算密集的图形引擎。
+
+<figure markdown="span">
+    ![awa](https://kotlinlang.org/docs/images/wasm-performance-compose.png)
+    <figcaption>Kotlin/Wasm performance</figcaption>
+</figure>
+
+Compose Web 其实尝试过用 JS 作为 Skia 的实现语言，但是很快就取消了。
+正是因为性能，Compose Multiplatform 现在还是换成了 WASM 实现。
+就连在 V8 引擎上运行的 CMP/JS 最终都被抛弃了，更何况使用 QuickJS 的 ArkUI？
+
+更遗憾的是，ArkUI 现在还不支持 WASM，无法走像现在 Compose Web 一样的道路。
+非要写这个“玩具”也会很麻烦，曾经的 CMP/JS 的代码现在根本找不到了，或者说可能从未公开过。
+如果想使用 [binaryen](https://github.com/WebAssembly/binaryen) 工具集的 `wasm2js` 工具实验性的将 WASM 转为 JS，
+你也会发现根本无法使用，因为 WASM 的内存管理机制与 JS 的不同，转换后需要使用额外的 WASM 包来完成相关操作。而鸿蒙并没有这个包。
+
+所以说这条道路理论上也是可行的，但我相信应该没人会这样做。这会付出非常大的经历来写这个 wrapper，而最终结果的性能也会不如意。
