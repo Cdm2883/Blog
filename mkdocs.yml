@@ -94,7 +94,12 @@ plugins:
         - tags.md
   - meta-descriptions
   - minify:
-      minify_html: true
+      minify_css: true
+      cache_safe: true
+      css_files:
+        - assets/stylesheets/md-banner.css
+        - assets/stylesheets/md-search.css
+        - assets/stylesheets/md-post.css
 
 # noinspection YAMLSchemaValidation, SpellCheckingInspection
 markdown_extensions:
