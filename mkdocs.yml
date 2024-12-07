@@ -149,6 +149,7 @@ extra_javascript:
   - https://unpkg.zhimg.com/mathjax@3.2.2/es5/tex-mml-chtml.js
 
 extra_css:
+  - assets/stylesheets/article.css
   - assets/stylesheets/md-banner.css
   - assets/stylesheets/md-search.css
   - assets/stylesheets/md-post.css
