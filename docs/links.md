@@ -31,6 +31,6 @@ hide:
 
     [:octicons-arrow-right-24: 过去看看](https://zjhzzy.github.io)
 
-> 期待你的加入~
+> 期待你的加入 ~
 
 </div>
