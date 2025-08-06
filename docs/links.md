@@ -31,6 +31,14 @@ hide:
 
     [:octicons-arrow-right-24: 过去看看](https://zjhzzy.github.io)
 
+-   __洛元の小屋__ ![avatar](https://blog.dimeta.top/upload/avatar.jpg)
+
+    ---
+
+    洛元の小屋，科技、游戏、生活为主的 blog
+
+    [:octicons-arrow-right-24: 过去看看](https://blog.dimeta.top)
+
 > 期待你的加入 ~
 
 </div>
