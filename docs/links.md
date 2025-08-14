@@ -39,6 +39,14 @@ hide:
 
     [:octicons-arrow-right-24: 过去看看](https://blog.dimeta.top)
 
+-   __Adpro の Blog__ ![avatar](https://blog.adproqwq.top/avatar.jpg)
+
+    ---
+
+    Adpro 的 Blog，可能有有用的东西？
+
+    [:octicons-arrow-right-24: 过去看看](https://blog.adproqwq.top)
+
 > 期待你的加入 ~
 
 </div>
