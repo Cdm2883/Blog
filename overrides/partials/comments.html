@@ -1,5 +1,27 @@
 {% if page.url[1].isdigit() %}
 <h2 id="__comments">{{ lang.t("meta.comments") }}</h2>
+<!--suppress ES6ConvertVarToLetConst -->
+<script>
+    var url = new URL(window.location.href);
+    if (url.pathname.endsWith('/index.html'))
+        url.pathname = url.pathname.slice(0, -10);
+    history.replaceState({}, "", url);
+
+    if (url.pathname.startsWith('/preview/')) {
+        var style = document.createElement('style');
+        // noinspection JSDeprecatedSymbols
+        style.type = 'text/css';
+        style.innerHTML = `
+            #__comments {
+                display: none!important;
+            }
+            .giscus {
+                display: none!important;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+</script>
 <!-- Insert generated snippet here -->
 <script src="https://giscus.app/client.js"
         data-repo="Cdm2883/Blog"
