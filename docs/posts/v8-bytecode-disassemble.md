@@ -1,5 +1,5 @@
 ---
-date: 1919-08-10
+date: 2025-08-16
 categories:
   - 技术
 tags:
@@ -11,7 +11,7 @@ draft: true
 # V8 字节码反汇编实战：分析受保护的 JavaScript 代码
 
 当我们需要发布用于 Node.js 的 JavaScript SDK，或在 Electron、NW.js 等基于 V8 的框架上开发桌面应用时，
-往往希望能够保护其核心源代码，避免业务逻辑被轻易窥见。
+往往希望能够保护其核心源代码，避免业务逻辑能够被轻易窥见。
 谈到 JavaScript（以下简称 JS） 的“加密”或保护，通常会想到诸如 [javascript-obfuscator](https://github.com/javascript-obfuscator/javascript-obfuscator)
 等这样的混淆工具用以降低代码的可读性，但这些工具的最终产物仍旧是 JS 文件。
 对于那些在运行时能够固定 V8 版本的场景（例如打包的 Node.js SDK、Electron 应用等），我们可以采用更底层的方案：**保存 V8 字节码**。
@@ -61,7 +61,7 @@ Electron 也提供了相关的命令行工具 [`@electron/asar`](https://www.npm
 能够帮助我们轻松的解压 `asar` 文件，那我们就赶紧来解压试试看吧！
 
 于是我们尝试执行：`#!powershell npx asar extract .\application.asar .\temp`。
-一切看似顺利，但当我们查看解压出的文件内容时，却发现全是乱码 —— 很显然，这个文件被加密了！
+一切看似顺利，但当我们查看解压出的文件内容时，却发现全是乱码 —— 很显然，这个文件以某种方式被**加密**了！
 
 好在查阅 [Electron 的文档](https://www.electronjs.org/zh/docs/latest/tutorial/asar-archives) 后可以得知，
 在程序运行环境中，我们依然可以通过 Node.js 的 `fs` 模块直接读取 asar 内的文件。这就给了我们可操作的空间。
@@ -83,15 +83,14 @@ import("@electron/asar").then(({ listPackage }) => {
         const src  = pathApp + path,
               dist = pathOut + path;
         fs.mkdirSync(resolve(dist, '..'), { recursive: true });
-        fs.readFile(src, (err, buffer) => {
-            if (err) return console.warn(err);
-            fs.writeFile(dist, buffer, {}, () => undefined);
-        });
+        fs.readFile(src, (err, buffer) => err
+          ? console.warn(err)
+          : fs.writeFile(dist, buffer, {}, () => undefined));
     }
 });
 ```
 
-但是事情并没有就此结束，反而刚刚进入正题。解压出的文件非常反常：
+但是事情并没有就此结束，反而才刚刚进入正题。我们发现解压出的文件非常反常：
 <span id="app_launcher_index_js"></span>
 
 ```js title="app_launcher/index.js"
@@ -99,14 +98,16 @@ require('../../major.node').load('internal_index', module);
 ```
 
 而且不止这一个文件，其中的大部分文件都是这样类似的结构，
-把真正的逻辑委托给一个 `.node` 原生模块来加载。
+把真正的逻辑委托给一个相同的模块来加载。
 由此，下一步的目标就十分明确了 —— 继续去分析这个 `major.node` 文件。
 
 ## 提取出 V8 字节码
 
-原生模块，也叫 `Addons`，其实载体就是一个动态链接库。
-当原生模块被 `require` 时，内部会通过调用 `#!c void napi_module_register(napi_module* mod)`
-来往 `#!js module.exports` 上挂内容。
+从文件名来看，它并非普通的 JS 模块。扩展名 `.node` 通常意味着这是一个 [Node.js 原生模块](https://nodejs.org/api/addons.html)，
+而原生模块（a.k.a. `Addons`）的载体其实就是一个普通的**动态链接库**。
+
+当原生模块被 `#!js require()` 时，内部会调用 `#!c void napi_module_register(napi_module* mod)`
+来将内容挂载到 `#!js module.exports`。
 
 现在我们把 `major.node` 导入 `IDA Pro` 并根据导入表定位到调用这个函数的地方：
 
@@ -247,6 +248,7 @@ _OWORD *__fastcall Init0(_OWORD *a1, __int64 a2, __int64 *a3)
 }
 ```
 
+<span id="set_v8_bytecode_debug"></span>
 从这里开始有些初见端倪了，能够注意到这里有一个判断环境变量 `??V8BytecodeDebug` 是否为 `1`
 并以此开关全局变量 `is_v8_bytecode_debug`。这表明这个加载似乎与 V8 字节码有关？  
 现在，我们给系统增加一条环境变量 `??V8BytecodeDebug=1`，这个 debug 开关或许以后有用？
@@ -332,7 +334,7 @@ if (script.cachedDataRejected) {
 其中 `cachedData` 就是我们进行下一步的关键数据 —— **V8 字节码**！
 
 现在我们只需要动手验证一下想法。根据所猜想的加载方式，
-很容易想到可以劫持 `vm.Script` 的构造函数来动态地 dump 出所需的字节码。  
+能很容易想到可以劫持 `vm.Script` 的构造函数来动态地 dump 出所需的字节码。  
 接下来我们在 ^^合适的时机^^ 在主进程注入以下 JS 代码：
 
 ```js
@@ -387,7 +389,46 @@ vm.Script = new Proxy(vm.Script, { /* ... */ });
 
 ---
 
-WIP
+现在，我们运行程序并查看它的标准输出（仅展示部分内容）：
+
+```eiffel hl_lines="5-8"
+[19:06:31.312 INF] [preload] succeeded. <PATH_APP>\versions\9.9.20-37625\resources\app\major.node
+[19:06:31.339 INF] [preload] succeeded. <PATH_APP>\versions\9.9.20-37625\resources\app\wrapper.node
+[19:06:31.347 INF] resourcesPath: <PATH_APP>\versions\9.9.20-37625\resources
+[19:06:31.366 INF] [preload] register done. major.node
+[19:06:31.368 INF] major ... v8.31.11
+[19:06:31.369 INF] file path: <PATH_APP>\versions\9.9.20-37625\resources\app\app_launcher\
+load internal done, file_name: <PATH_APP>\versions\9.9.20-37625\resources\app\app_launcher\index.js
+[19:06:31.736 INF] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\app_launcher\index.js <Buffer 72 06 de c0 7c f0 b8 4b 62 0b 00 00 db 74 b9 22 7f 53 dd 4f b0 0c 00 00 00 00 00 00 00 00 00 00 01 30 54 1d 03 30 07 b4 1e 60 0c 00 00 00 01 08 07 b5 ... 3230 more bytes>
+[19:06:31.737 INF] major ... v8.31.11
+[19:06:31.737 INF] file path: <PATH_APP>\versions\9.9.20-37625\resources\app\app_launcher\
+load internal done, file_name: <PATH_APP>\versions\9.9.20-37625\resources\app\app_launcher\launcher.js
+[19:06:31.738 INF] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\app_launcher\launcher.js <Buffer 72 06 de c0 7c f0 b8 4b 9a a5 00 00 db 74 b9 22 7f 53 dd 4f b8 c9 00 00 00 00 00 00 00 00 00 00 01 30 54 1d 03 30 07 b4 1e 60 0c 00 00 00 01 08 07 b5 ... 51622 more bytes>
+[19:06:31.760 INF] major ... v8.31.11
+[19:06:31.761 INF] file path: <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\
+load internal done, file_name: <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\background.js
+[19:06:31.761 INF] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\background.js <Buffer 72 06 de c0 7c f0 b8 4b 0e 2b 00 00 db 74 b9 22 7f 53 dd 4f 48 b2 00 00 00 00 00 00 00 00 00 00 01 30 54 1d 03 30 07 b4 1e 60 0c 00 00 00 01 08 07 b5 ... 45622 more bytes>
+# ...
+[19:06:32.676 INF] major ... v8.31.11
+[19:06:32.677 INF] file path: <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\
+load internal done, file_name: <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\17.background.js
+[19:06:32.718 INF] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\17.background.js <Buffer 72 06 de c0 7c f0 b8 4b 58 37 3b 00 db 74 b9 22 7f 53 dd 4f b0 43 8c 00 00 00 00 00 00 00 00 00 01 30 54 1d 03 30 07 b4 1e 60 0c 00 00 00 01 08 07 b5 ... 9192350 more bytes>
+[19:06:32.721 INF] [preload] register done. wrapper.node
+[renderer] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\renderer\polyfill.js [object Uint8Array]
+[renderer] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\renderer\commonNodeModule-???????-??-utils.js [object Uint8Array]
+[renderer] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\renderer\commonNodeModule-axios.js [object Uint8Array]
+[renderer] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\renderer\commonNodeModule-js-md5.js [object Uint8Array]
+[renderer] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\renderer\commonNodeModule-emoji-regex.js [object Uint8Array]
+[19:06:33.151 INF] [renderer] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\renderer\54539.js [object Uint8Array]
+[19:06:34.259 INF] [renderer] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\renderer\99218.js [object Uint8Array]
+```
+
+哇，我们注入的 dumper 被成功触发了！观察到 dump 出的 Buffer 开头的 `?? ?? DE C0` 了吗，这正是 V8 字节码的魔数部分。
+最开头的 `72 06` 是 V8 引擎内部依据版本号生成的哈希值，能够用于佐证字节码是否能够正常被引擎解析。
+
+继续观察输出，还能发现里面多出了许多额外的调试信息，正是我们[之前设置的环境变量](#set_v8_bytecode_debug)发挥了作用！这能够辅助我们判断执行的过程。
+
+但是徒有字节码我们人类还是无法阅读和分析，所以接下来要着手开始反汇编字节码……
 
 ## 反汇编 V8 字节码
 
