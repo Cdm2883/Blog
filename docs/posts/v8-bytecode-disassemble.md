@@ -310,7 +310,8 @@ __int64 __fastcall func_exports_load0(__int64 **a1)
 兜兜转转，我们终于找到了真正的加载逻辑所在的地方：`func_exports_load_data`。  
 由于生成出的伪代码太过长了，足足有 `1109` 行！故这里不会完整贴出。
 
-![运行字节码](../assets/images/v8-bytecode-disassemble/func_exports_load_data_new_script.png)
+![运行字节码](../assets/images/v8-bytecode-disassemble/func_exports_load_data_new_script.light.png#only-light)
+![运行字节码](../assets/images/v8-bytecode-disassemble/func_exports_load_data_new_script.dark.png#only-dark)
 
 观察这部分伪代码，如果你写过相关的逻辑，应该能够敏锐地察觉到，这是在加载并运行 V8 的字节码！
 我们猜测，这些行为可能与以下 JS 代码的行为类似：
