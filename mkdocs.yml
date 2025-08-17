@@ -100,6 +100,8 @@ plugins:
         - assets/stylesheets/md-banner.css
         - assets/stylesheets/md-search.css
         - assets/stylesheets/md-post.css
+  - glightbox:
+      effect: fade
 
 # noinspection YAMLSchemaValidation, SpellCheckingInspection
 markdown_extensions:
@@ -150,6 +152,7 @@ extra_javascript:
 
 extra_css:
   - assets/stylesheets/article.css
+  - assets/stylesheets/glightbox.css
   - assets/stylesheets/md-banner.css
   - assets/stylesheets/md-search.css
   - assets/stylesheets/md-post.css
