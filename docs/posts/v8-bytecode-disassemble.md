@@ -33,18 +33,18 @@ V8 字节码本质上是 Ignition 引擎解释执行的中间表示（IR）缓�
 一切都要从某个国产 IM 软件说起……
 近年来，该软件已使用 Electron 重构，再经过一段时间的迭代更新，
 来自博客 [V8 字节码反编译 还原 Bytenode 保护的 JS 代码 - 白帽酱](https://rce.moe/2025/01/07/v8-bytecode-decompiler) 的内容已经不再适用。
-因此本文将以文章发布时它的最新版本 `9.9.20-37625 (64位)` 作为教具，开始我们的分析。
+因此本文将以文章发布时它的最新版本 `9.9.21-38503 (64位)` 作为教具，开始我们的分析。
 
 按照常规的 Electron 分析流程，我们首先定位软件的 `package.json` 来确定其 JS 的入口：
 
 ```json title="package.json" hl_lines="6"
 {
   // ...
-  "version": "9.9.20-37625",
+  "version": "9.9.21-38503",
   "private": true,
   // ...
   "main": "./application.asar/app_launcher/index.js",
-  "buildVersion": "37625",
+  "buildVersion": "38503",
   "isPureShell": true,
   "isByteCodeShell": true,
   "platform": "win32",
@@ -341,7 +341,7 @@ if (script.cachedDataRejected) {
 ```js
 const vm = require("vm");
 
-const resourcesPath = process.resourcesPath;  // <安装路径>\versions\9.9.20-37625\resources
+const resourcesPath = process.resourcesPath;  // <安装路径>\versions\9.9.21-38503\resources
 const dist = resolve(__dirname, 'dist');
 
 /** @param {vm.ScriptOptions} options */
@@ -393,39 +393,50 @@ vm.Script = new Proxy(vm.Script, { /* ... */ });
 现在，我们运行程序并查看它的标准输出（仅展示部分内容）：
 
 ```eiffel hl_lines="5-8"
-[19:06:31.312 INF] [preload] succeeded. <PATH_APP>\versions\9.9.20-37625\resources\app\major.node
-[19:06:31.339 INF] [preload] succeeded. <PATH_APP>\versions\9.9.20-37625\resources\app\wrapper.node
-[19:06:31.347 INF] resourcesPath: <PATH_APP>\versions\9.9.20-37625\resources
-[19:06:31.366 INF] [preload] register done. major.node
-[19:06:31.368 INF] major ... v8.31.11
-[19:06:31.369 INF] file path: <PATH_APP>\versions\9.9.20-37625\resources\app\app_launcher\
-load internal done, file_name: <PATH_APP>\versions\9.9.20-37625\resources\app\app_launcher\index.js
-[19:06:31.736 INF] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\app_launcher\index.js <Buffer 72 06 de c0 7c f0 b8 4b 62 0b 00 00 db 74 b9 22 7f 53 dd 4f b0 0c 00 00 00 00 00 00 00 00 00 00 01 30 54 1d 03 30 07 b4 1e 60 0c 00 00 00 01 08 07 b5 ... 3230 more bytes>
-[19:06:31.737 INF] major ... v8.31.11
-[19:06:31.737 INF] file path: <PATH_APP>\versions\9.9.20-37625\resources\app\app_launcher\
-load internal done, file_name: <PATH_APP>\versions\9.9.20-37625\resources\app\app_launcher\launcher.js
-[19:06:31.738 INF] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\app_launcher\launcher.js <Buffer 72 06 de c0 7c f0 b8 4b 9a a5 00 00 db 74 b9 22 7f 53 dd 4f b8 c9 00 00 00 00 00 00 00 00 00 00 01 30 54 1d 03 30 07 b4 1e 60 0c 00 00 00 01 08 07 b5 ... 51622 more bytes>
-[19:06:31.760 INF] major ... v8.31.11
-[19:06:31.761 INF] file path: <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\
-load internal done, file_name: <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\background.js
-[19:06:31.761 INF] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\background.js <Buffer 72 06 de c0 7c f0 b8 4b 0e 2b 00 00 db 74 b9 22 7f 53 dd 4f 48 b2 00 00 00 00 00 00 00 00 00 00 01 30 54 1d 03 30 07 b4 1e 60 0c 00 00 00 01 08 07 b5 ... 45622 more bytes>
+[15:04:11.996 INF] [preload] succeeded. <PATH_APP>\versions\9.9.21-38503\resources\app\major.node
+[15:04:12.012 INF] [preload] succeeded. <PATH_APP>\versions\9.9.21-38503\resources\app\wrapper.node
+[15:04:12.044 INF] resourcesPath: <PATH_APP>\versions\9.9.21-38503\resources
+[15:04:12.061 INF] [preload] register done. major.node
+[15:04:12.062 INF] major ... v8.31.11
+[15:04:12.062 INF] file path: <PATH_APP>\versions\9.9.21-38503\resources\app\app_launcher\
+load internal done, file_name: <PATH_APP>\versions\9.9.21-38503\resources\app\app_launcher\index.js
+[15:04:12.396 INF] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\app_launcher\index.js <Buffer 72 06 de c0 7c f0 b8 4b cc 0b 00 00 db 74 b9 22 7f 53 dd 4f 20 0d 00 00 00 00 00 00 00 00 00 00 01 30 54 1d 03 30 07 b4 1e 60 0c 00 00 00 01 08 07 b5 ... 3342 more bytes>
+[15:04:12.397 INF] major ... v8.31.11
+[15:04:12.397 INF] file path: <PATH_APP>\versions\9.9.21-38503\resources\app\app_launcher\
+load internal done, file_name: <PATH_APP>\versions\9.9.21-38503\resources\app\app_launcher\launcher.js
+[15:04:12.398 INF] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\app_launcher\launcher.js <Buffer 72 06 de c0 7c f0 b8 4b e3 a5 00 00 db 74 b9 22 7f 53 dd 4f 18 ca 00 00 00 00 00 00 00 00 00 00 01 30 54 1d 03 30 07 b4 1e 60 0c 00 00 00 01 08 07 b5 ... 51718 more bytes>
+[15:04:12.420 INF] major ... v8.31.11
+[15:04:12.420 INF] file path: <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\
+load internal done, file_name: <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\background.js
+[15:04:12.421 INF] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\background.js <Buffer 72 06 de c0 7c f0 b8 4b 50 2f 00 00 db 74 b9 22 7f 53 dd 4f 70 c0 00 00 00 00 00 00 00 00 00 00 01 30 54 1d 03 30 07 b4 1e 60 0c 00 00 00 01 08 07 b5 ... 49246 more bytes>
 # ...
-[19:06:32.676 INF] major ... v8.31.11
-[19:06:32.677 INF] file path: <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\
-load internal done, file_name: <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\17.background.js
-[19:06:32.718 INF] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\17.background.js <Buffer 72 06 de c0 7c f0 b8 4b 58 37 3b 00 db 74 b9 22 7f 53 dd 4f b0 43 8c 00 00 00 00 00 00 00 00 00 01 30 54 1d 03 30 07 b4 1e 60 0c 00 00 00 01 08 07 b5 ... 9192350 more bytes>
-[19:06:32.721 INF] [preload] register done. wrapper.node
-[renderer] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\renderer\polyfill.js [object Uint8Array]
-[renderer] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\renderer\commonNodeModule-???????-??-utils.js [object Uint8Array]
-[renderer] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\renderer\commonNodeModule-axios.js [object Uint8Array]
-[renderer] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\renderer\commonNodeModule-js-md5.js [object Uint8Array]
-[renderer] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\renderer\commonNodeModule-emoji-regex.js [object Uint8Array]
-[19:06:33.151 INF] [renderer] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\renderer\54539.js [object Uint8Array]
-[19:06:34.259 INF] [renderer] dumper <PATH_APP>\versions\9.9.20-37625\resources\app\application.asar\renderer\99218.js [object Uint8Array]
+[15:04:12.937 INF] major ... v8.31.11
+[15:04:12.937 INF] file path: <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\
+load internal done, file_name: <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\17.background.js
+[15:04:12.971 INF] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\17.background.js <Buffer 72 06 de c0 7c f0 b8 4b b0 8d 3d 00 db 74 b9 22 7f 53 dd 4f f0 82 92 00 00 00 00 00 00 00 00 00 01 30 54 1d 03 30 07 b4 1e 60 0c 00 00 00 01 08 07 b5 ... 9601758 more bytes>
+[15:04:12.974 INF] [preload] register done. wrapper.node
+[renderer] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\renderer\polyfill.js [object Uint8Array]
+[renderer] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\renderer\commonNodeModule-???????-??-utils.js [object Uint8Array]
+[15:04:13.236 INF] [renderer] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\renderer\commonNodeModule-axios.js [object Uint8Array]
+[renderer] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\renderer\commonNodeModule-???????-???????-??.js [object Uint8Array]
+[15:04:13.239 INF] [renderer] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\renderer\commonNodeModule-to-regex-range.js [object Uint8Array]
+[renderer] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\renderer\24815.js [object Uint8Array]
+[15:04:13.245 INF] [renderer] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\renderer\85193.js [object Uint8Array]
+[15:04:13.251 INF] [renderer] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\renderer\15787.js [object Uint8Array]
+[15:04:13.253 INF] [renderer] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\renderer\84745.js [object Uint8Array]
+[15:04:13.256 INF] [renderer] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\renderer\51283.js [object Uint8Array]
+[15:04:13.258 INF] [renderer] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\renderer\50792.js [object Uint8Array]
+[renderer] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\renderer\59118.js [object Uint8Array]
+[renderer] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\renderer\98152.js [object Uint8Array]
+[renderer] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\renderer\26642.js [object Uint8Array]
+[renderer] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\renderer\65083.js [object Uint8Array]
+[15:04:13.600 INF] [renderer] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\renderer\commonNodeModule-js-md5.js [object Uint8Array]
+[15:04:13.602 INF] [renderer] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\renderer\commonNodeModule-emoji-regex.js [object Uint8Array]
+[15:04:13.605 INF] [renderer] dumper <PATH_APP>\versions\9.9.21-38503\resources\app\application.asar\renderer\85782.js [object Uint8Array]
 ```
 
-哇，我们注入的 dumper 被成功触发了！观察到 dump 出的 Buffer 开头的 `?? ?? DE C0` 了吗，这正是 V8 字节码的魔数部分。
-最开头的 `72 06` 是 V8 引擎内部依据版本号生成的哈希值，能够用于佐证字节码是否能够正常被引擎解析。
+哇，我们注入的 dumper 被成功触发了！观察到 dump 出的 Buffer 开头的 `?? ?? DE C0 ?? ?? ?? ??` 了吗，这正是 V8 字节码的魔数部分。
+其中 `DE C0` 以外的部分是 V8 引擎内部依据版本号生成的哈希值，能够用于佐证字节码是否能够正常被引擎解析。
 
 继续观察输出，还能发现里面多出了许多额外的调试信息，正是我们[之前设置的环境变量](#set_v8_bytecode_debug)发挥了作用！这能够辅助我们判断执行的过程。
 
