@@ -93,6 +93,7 @@ plugins:
       exclude:
         - tags.md
   - meta-descriptions
+  - meta-manager
   - minify:
       minify_css: true
       cache_safe: true
@@ -102,6 +103,7 @@ plugins:
         - assets/stylesheets/md-post.css
   - glightbox:
       effect: fade
+      manual: true
 
 # noinspection YAMLSchemaValidation, SpellCheckingInspection
 markdown_extensions:
@@ -136,6 +138,7 @@ markdown_extensions:
   - attr_list
   - def_list
   - footnotes
+  - meta
   - md_in_html
   - tables
   - toc:
