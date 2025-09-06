@@ -31,10 +31,10 @@ hide:
 
 ## 版权声明
 
-本站文章部分采用 [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/) 协议进行许可。
+本站的所有文章均采用 [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/) 协议进行许可。
 你可以自由地共享和修改文章内容，但必须注明出处，并且不得用于商业用途。任何基于本站文章的再创作必须使用相同的许可协议。
 
-本站代码部分采用 Apache License 2.0 开源。
+本站的所有构建代码均采用 Apache License 2.0 进行开源。
 请参阅 [LICENSE](https://github.com/Cdm2883/Blog/blob/master/LICENSE) 文件了解详情。
 
 ```
