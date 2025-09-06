@@ -152,6 +152,8 @@ markdown_extensions:
 extra_javascript:
   - assets/javascripts/mathjax.js
   - https://unpkg.zhimg.com/mathjax@3.2.2/es5/tex-mml-chtml.js
+  - https://cdn.bootcdn.net/ajax/libs/tablesort/5.2.1/tablesort.min.js
+  - assets/javascripts/tablesort.js
 
 extra_css:
   - assets/stylesheets/article.css
