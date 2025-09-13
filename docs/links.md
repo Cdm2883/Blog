@@ -47,6 +47,14 @@ hide:
 
     [:octicons-arrow-right-24: 过去看看](https://blog.adproqwq.top)
 
+-   __Coolloong's Blog__ ![avatar](https://avatars.githubusercontent.com/u/69153398?v=4)
+
+    ---
+
+    Coolloong 的博客
+
+    [:octicons-arrow-right-24: 过去看看](https://coolloong.github.io)
+
 > 期待你的加入 ~
 
 </div>
