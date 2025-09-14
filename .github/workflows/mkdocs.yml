@@ -35,7 +35,7 @@ jobs:
 
       - name: Build preview site
         run: |
-          mkdocs serve &
+          mkdocs serve --no-livereload &
           sleep 3
           wget -r -np -k -p --adjust-extension -nH -P ./site/preview http://127.0.0.1:8000 || true
 
