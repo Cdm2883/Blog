@@ -66,7 +66,7 @@ plugins:
       post_date_format: full
       post_url_format: "{date}/{file}"
       archive_date_format: yyyy / MM
-      categories_slugify: !!python/object/apply:ext.categories_slug.slugify {}
+      categories_slugify: !!python/object/apply:extensions.categories_slug.slugify {}
       categories_allowed:
         - 技术
         - 绘画
@@ -150,7 +150,8 @@ markdown_extensions:
 
 
 hooks:
-  - ext/copyright_footer.py
+  - hooks/copyright_footer.py
+  - hooks/random_posts.py
 
 extra_javascript:
   - assets/javascripts/mathjax.js
