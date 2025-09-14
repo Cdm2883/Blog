@@ -1,0 +1,3 @@
+article.md-content__inner.md-typeset iframe.giscus-frame {
+    max-width: calc(100% - 1px);
+}

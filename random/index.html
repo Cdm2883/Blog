@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>博客漫游中…</title>
+<style>
+    body { background: #1e2129 }
+    @media (prefers-color-scheme: light) {
+        body { background: unset }
+    }
+</style>
+</head>
+<body>
+<script>
+    var posts = ["2025/09/07/android7-https-capture-without-root", "2025/08/24/electron-app-devmode-analysis", "2024/10/06/feasibility-study-for-compose-for-harmony", "2024/07/23/hello-world"];
+    var post = posts[Math.floor(Math.random() * posts.length)];
+    var base = window.location.pathname.replace(/\/random(?:\/index\.html)?\/?$/, '');
+    window.location.href = base + '/' + post + '/';
+</script>
+</body>
+</html>
