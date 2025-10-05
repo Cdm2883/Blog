@@ -66,3 +66,16 @@ hide:
 > 期待你的加入 ~
 
 </div>
+
+<script>
+    const ul = document.querySelector('.links-div ul');
+    const lis = Array.from(ul.children);
+
+    for (let i = lis.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [lis[i], lis[j]] = [lis[j], lis[i]];
+    }
+
+    ul.innerHTML = '';
+    lis.forEach(li => ul.appendChild(li));
+</script>
