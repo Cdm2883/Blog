@@ -9,6 +9,17 @@
     {% endif %}
 {% endblock %}
 
+{% block libs %}
+    {{ super() }}
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "tldblyhddo");
+    </script>
+{% endblock %}
+
 {% block announce %}
 我的 QQ 交流群：
 <a target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=Vcspr10ZnFcPd29hgPUgmxcBPsPni6pC&jump_from=webapi&authKey=uKMeRLS8aWCJwEXlYmkKeg1aBg4xmt/UbdXvEejPDOqCxhIKpqLK8Q+qG4ZFl0Nn">
