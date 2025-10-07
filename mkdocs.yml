@@ -32,9 +32,8 @@ theme:
         icon: material/brightness-4
         name: 切换到主题跟随系统
   features:
-#    - navigation.instant
-#    - navigation.instant.prefetch
-#    - navigation.instant.progress
+    - navigation.instant
+    - navigation.instant.progress
     - navigation.tracking
     - navigation.tabs
     - navigation.sections
