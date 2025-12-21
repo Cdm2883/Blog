@@ -40,7 +40,7 @@ hide:
 
     [:octicons-arrow-right-24: 过去看看](https://blog.dimeta.top)
 
--   __Adpro の Blog__ ![avatar](https://blog.adproqwq.top/avatar.jpg)
+-   __Adpro の Blog__ ![avatar](https://blog.adproqwq.top/avatar.png)
 
     ---
 
