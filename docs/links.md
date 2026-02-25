@@ -64,6 +64,14 @@ hide:
 
     [:octicons-arrow-right-24: 过去看看](https://enable-if.com)
 
+-   __Young's Toy Box__ ![avatar](https://avatars.githubusercontent.com/u/25684570?v=4)
+
+    ---
+
+    玩具盒
+
+    [:octicons-arrow-right-24: 过去看看](https://wesley-young.github.io)
+
 > 期待你的加入 ~
 
 </div>
