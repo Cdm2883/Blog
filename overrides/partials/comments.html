@@ -1,78 +1,15 @@
 {% if page.url[1].isdigit() %}
 <h2 id="__comments">{{ lang.t("meta.comments") }}</h2>
-<!--suppress ES6ConvertVarToLetConst -->
-<script>
-    var url = new URL(window.location.href);
-    if (url.pathname.endsWith('/index.html'))
-        url.pathname = url.pathname.slice(0, -10);
-    history.replaceState({}, "", url);
-
-    if (url.pathname.startsWith('/preview/')) {
-        var style = document.createElement('style');
-        // noinspection JSDeprecatedSymbols
-        style.type = 'text/css';
-        style.innerHTML = `
-            #__comments {
-                display: none!important;
-            }
-            .giscus {
-                display: none!important;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-</script>
-<!-- Insert generated snippet here -->
-<script src="https://giscus.app/client.js"
-        data-repo="Cdm2883/Blog"
-        data-repo-id="R_kgDOMZ8Ong"
-        data-category="博客评论"
-        data-category-id="DIC_kwDOMZ8Ons4ChGP8"
-        data-mapping="pathname"
-        data-strict="0"
-        data-reactions-enabled="1"
-        data-emit-metadata="0"
-        data-input-position="top"
-        data-theme="light"
-        data-lang="zh-CN"
-        crossorigin="anonymous"
-        async>
-</script>
-
-<!-- Synchronize Giscus theme with palette -->
-<!--suppress JSUnresolvedReference, JSDeprecatedSymbols, ES6ConvertVarToLetConst -->
-<script>
-    var giscus = document.querySelector("script[src*=giscus]")
-
-    // Set palette on initial load
-    var palette = __md_get("__palette")
-    if (palette && typeof palette.color === "object") {
-        var theme = palette.color.scheme === "slate"
-            ? "transparent_dark"
-            : "light"
-
-        // Instruct Giscus to set theme
-        giscus.setAttribute("data-theme", theme)
-    }
-
-    // Register event handlers after documented loaded
-    document.addEventListener("DOMContentLoaded", function() {
-        var ref = document.querySelector("[data-md-component=palette]")
-        ref.addEventListener("change", function() {
-            var palette = __md_get("__palette")
-            if (palette && typeof palette.color === "object") {
-                var theme = palette.color.scheme === "slate"
-                    ? "transparent_dark"
-                    : "light"
-
-                // Instruct Giscus to change theme
-                var frame = document.querySelector(".giscus-frame")
-                frame.contentWindow.postMessage(
-                    { giscus: { setConfig: { theme } } },
-                    "https://giscus.app"
-                )
-            }
-        })
-    })
-</script>
+<div id="__giscus"
+     data-repo="Cdm2883/Blog"
+     data-repo-id="R_kgDOMZ8Ong"
+     data-category="博客评论"
+     data-category-id="DIC_kwDOMZ8Ons4ChGP8"
+     data-mapping="pathname"
+     data-strict="0"
+     data-reactions-enabled="1"
+     data-emit-metadata="0"
+     data-input-position="top"
+     data-lang="zh-CN">
+</div>
 {% endif %}

@@ -30,3 +30,56 @@
 </a>
 ，欢迎来群里玩呀！
 {% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <!--suppress JSUnresolvedReference -->
+    <script>
+    const giscusOrigin = "https://giscus.app";
+    const getGiscusTheme = (palette = __md_get("__palette")) =>
+        palette && typeof palette.color === "object" && palette.color.scheme === "slate"
+            ? "transparent_dark"
+            : "light"
+    function createGiscusScript(container) {
+        const script = document.createElement("script");
+        script.src = giscusOrigin + "/client.js";
+        script.async = true;
+        script.crossOrigin = "anonymous";
+        Array.from(container.attributes)
+            .filter(attribute => attribute.name.startsWith("data-"))
+            .forEach(attribute => script.setAttribute(attribute.name, attribute.value));
+        script.setAttribute("data-theme", getGiscusTheme());
+        return script;
+    }
+    function loadGiscus() {
+        const comments = document.getElementById("__comments");
+        const container = document.getElementById("__giscus");
+        if (!comments || !container) return;
+
+        const url = new URL(window.location.href);
+        if (url.pathname.endsWith("/index.html")) {
+            url.pathname = url.pathname.slice(0, -10);
+            history.replaceState({}, "", url);
+        }
+
+        const isPreview = url.pathname.startsWith("/preview/");
+        comments.hidden = isPreview;
+        container.hidden = isPreview;
+
+        if (!isPreview)
+            container.replaceChildren(createGiscusScript(container));
+    }
+
+    function syncGiscusTheme() {
+        const frame = document.querySelector(".giscus-frame");
+        if (!frame || !frame.contentWindow) return;
+
+        const message = { giscus: { setConfig: { theme: getGiscusTheme() } } };
+        frame.contentWindow.postMessage(message, giscusOrigin);
+    }
+
+    document$.subscribe(loadGiscus);
+    const paletteToggle = document.querySelector("[data-md-component=palette]");
+    if (paletteToggle) paletteToggle.addEventListener("change", syncGiscusTheme);
+    </script>
+{% endblock %}
