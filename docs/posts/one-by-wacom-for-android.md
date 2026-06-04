@@ -5,7 +5,7 @@ tags:
 draft: true
 ---
 
-# One by Wacom 的安卓驱动实现
+# 基于 Shizuku 的 Rootless One by Wacom 安卓驱动实现
 
 Lorem ipsum dolor sit amet, ex sea eirmod timeam iudicabit, ex porro nostro
 dissentiet sit. Ne pro latine docendi, timeam oblique moderatius ad nec. Est alia
