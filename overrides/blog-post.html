@@ -133,6 +133,16 @@
                                         </li>
                                     {% endif %}
 
+                                    <!-- Post license -->
+                                    {% if page.meta.license %}
+                                    <li class="md-nav__item">
+                                        <div class="md-nav__link">
+                                            {% include ".icons/material/text-box.svg" %}
+                                            <span class="md-ellipsis">{{ page.meta.license }}</span>
+                                        </div>
+                                    </li>
+                                    {% endif %}
+
                                 </ul>
                             </nav>
                         </li>
