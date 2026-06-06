@@ -1,5 +1,5 @@
 ---
-date: 2026-06-05
+date: 2026-06-07
 categories:
   - 技术
 tags:
@@ -91,9 +91,8 @@ import("@electron/asar").then(({ listPackage }) => {
 ```
 
 但是事情并没有就此结束，反而才刚刚进入正题。我们发现解压出的文件非常反常：
-<span id="app_launcher_index_js"></span>
 
-```js title="app_launcher/index.js"
+```js {#app_launcher_index_js title="app_launcher/index.js"}
 require('../../major.node').load('internal_index', module);
 ```
 
@@ -252,10 +251,10 @@ _OWORD *__fastcall Init0(_OWORD *a1, __int64 a2, __int64 *a3)
 }
 ```
 
-<span id="is_v8_bytecode_debug"></span>
 从这里开始便有些初见端倪了。能够注意到这里有一个判断环境变量 `??V8BytecodeDebug` 是否为 `1`，
 并以此开关全局变量 `is_v8_bytecode_debug` 的语句。  
 我们给系统增加一条环境变量 `??V8BytecodeDebug=1`，或许这个 debug 开关以后留着有用。
+{ #is_v8_bytecode_debug }
 
 还记得之前的 [`app_launcher/index.js`](#app_launcher_index_js) 文件吗？
 现在我们终于找到了调用 `load` 函数时，在 native 层真正会被调用的函数 `func_exports_load`... 了吗？
@@ -437,20 +436,23 @@ load internal done, file_name: <PATH_APP>\versions\9.9.30-48762\resources\app\ap
 
 V8 的 `cachedData` 可不是什么公开的稳定格式，直接手搓二进制解析器的成本显然过于高昂了。
 好在，解铃还须系铃人 —— **V8 其实自己就实现了字节码缓存的反序列化！**其核心的入口就是文件 
-[src/snapshot/code-serializer.cc](https://github.com/v8/v8/blob/a14ab029e21658cba458b7001281c5d526e67636/src/snapshot/code-serializer.cc#L481)
+[src/snapshot/code-serializer.cc](https://github.com/v8/v8/blob/13.8.258.18/src/snapshot/code-serializer.cc#L481)
 的 `#!cpp v8::internal::CodeSerializer::Deserialize` 函数。
 
-那我们该如何利用呢？在本文[开头](#beginning)引用的那篇博客和一些相关项目中（如：[noelex/v8dasm](https://github.com/noelex/v8dasm) 和 [j4k0xb/View8](https://github.com/j4k0xb/View8)）就有提及该如何修改 V8 和利用 D8 来启动这一过程。
+那我们该如何利用呢？在本文[开头](#beginning)引用的那篇博客和一些相关项目中（如：[noelex/v8dasm](https://github.com/noelex/v8dasm) 和 [j4k0xb/View8](https://github.com/j4k0xb/View8)）就有提及该如何修改 V8 来将反序列化结果打印到标准输出。
+
+至于该如何调用这个函数来启动这一过程，这里我选择了 D8，而不是像上述项目一样静态链接整个 V8 然后用外部程序调用 V8。  
+而原因：其一是在 Windows 上要去链接这些库，需要在项目配置中花上不少的心思；其二这也会给我们带来许多*隐形的好处*，我将在后文中详细描述。
 
 !!! note "什么是 D8？"
 
     > "d8 is useful for running some JavaScript locally or debugging changes you have made to V8."  
     > —— [Using `d8` · V8 Documentation](https://v8.dev/docs/d8)
     
-    D8（Developer Shell）是 V8 官方自带的一个 REPL 工具，一个只有 V8 的纯净 JavaScript 解释器。  
+    D8（Developer Shell）是 V8 项目自带的一个 REPL 工具，一个只有 V8 的纯净 JavaScript 解释器。  
     正如文档所说，我们可以使用 D8 来验证一些我们自己对 V8 做出的修改，这非常贴合我们的需求。
 
-那我们赶快开始动手吧！
+事不宜迟，我们赶快开始动手吧！
 
 ### 配置 V8 构建环境 {#build-v8}
 
@@ -479,7 +481,448 @@ V8 的 `cachedData` 可不是什么公开的稳定格式，直接手搓二进制
 
 ### 实现 V8 反汇编器 {#patch-v8}
 
-WIP
+然后我们开始修改代码。先给 D8 暴露一个 `loadBytecode()` 函数，传入一个 `cachedData` 文件路径，作为我们整个反汇编流程的入口：
+
+```cpp title="src/d8/d8.h" hl_lines="3"
+class Shell : public i::AllStatic {
+ public:
+  static void LoadBytecode(const v8::FunctionCallbackInfo<v8::Value>& info);
+```
+
+```cpp title="src/d8/d8.cc" hl_lines="3-4"
+Local<ObjectTemplate> Shell::CreateGlobalTemplate(Isolate* isolate) {
+  // ...
+  global_template->Set(isolate, "loadBytecode",
+                       FunctionTemplate::New(isolate, LoadBytecode));
+  return global_template;
+}
+```
+
+```cpp
+void Shell::LoadBytecode(const v8::FunctionCallbackInfo<v8::Value>& info) {
+  auto isolate = info.GetIsolate();
+  auto isolateInternal = reinterpret_cast<v8::internal::Isolate*>(isolate);
+
+  v8::String::Utf8Value filename(isolate, info[0]);
+  int length = 0;
+  std::unique_ptr<char[]> raw_filedata(ReadChars(*filename, &length));
+  auto filedata = reinterpret_cast<uint8_t*>(raw_filedata.get());
+
+  v8::internal::AlignedCachedData cached_data(filedata, length);
+  auto source = isolateInternal->factory()
+                    ->NewStringFromUtf8(base::CStrVector("source"))
+                    .ToHandleChecked();
+  v8::internal::ScriptDetails script_details;
+
+  printf("===== START DESERIALIZE BYTECODE =====\n");
+  v8::internal::CodeSerializer::Deserialize(isolateInternal, &cached_data,
+                                            source, script_details);
+}
+```
+
+值得一提的是，我并没有使用 V8 的 public API
+[`ScriptCompiler::CompileUnboundScript()`](https://github.com/v8/v8/blob/13.8.258.18/src/api/api.cc#L2397)
+来间接调用 `#!cpp Deserialize()`。
+原因之一，是随着 V8 版本的更新，这个方法的签名已然发生了改变，那些文章的写法已经不再适用了；
+其二，我们的代码在 D8 中编写，可以直接调用 `internal` 方法而不是欺骗公开 API 去走那堆无用的流程。
+
+然后我们仿造(1)刚刚提及的那些资料修改 V8，使它能在反序列化时吐出我们想要的信息：
+{ .annotate }
+
+1. 他们的 V8 版本实在是太老了！这里均改成了新版 V8 的写法
+
+<span style="display: block; margin-top: -.6rem;"></span>
+
+=== "`src/snapshot/code-serializer.cc`"
+
+    ```cpp hl_lines="6-8"
+    MaybeDirectHandle<SharedFunctionInfo> CodeSerializer::Deserialize(
+        Isolate* isolate, AlignedCachedData* cached_data,
+        DirectHandle<String> source, const ScriptDetails& script_details,
+        MaybeDirectHandle<Script> maybe_cached_script) {
+      // ...
+      std::cout << "\nStart SharedFunctionInfo\n";
+      result->SharedFunctionInfoPrint(std::cout);
+      std::cout << "\nEnd SharedFunctionInfo\n";
+      std::cout << std::flush;
+      // ...
+    }
+    ```
+
+=== "`src/diagnostics/objects-printer.cc`"
+
+    ```cpp hl_lines="3 5-12"
+    void SharedFunctionInfo::SharedFunctionInfoPrint(std::ostream& os) {
+      // ...
+      // PrintSourceCode(os);
+      // ...
+      os << "\nStart BytecodeArray\n";
+      if (isolate != nullptr && this->HasBytecodeArray()) {
+        this->GetActiveBytecodeArray(isolate)->Disassemble(os);
+      } else {
+        os << "<none>\n";
+      }
+      os << "\nEnd BytecodeArray\n";
+      os << std::flush;
+    }
+    ```
+
+    ```cpp hl_lines="12-19 24-26 31-34 39-41 52-54"
+    void HeapObject::HeapObjectShortPrint(std::ostream& os) {
+      // ...
+      if (IsString(*this, cage_base)) {
+        HeapStringAllocator allocator;
+        StringStream accumulator(&allocator);
+        Cast<String>(*this)->StringShortPrint(&accumulator);  // (1)
+        os << accumulator.ToCString().get();
+        return;
+      }
+      
+      // ...
+      if (map(cage_base)->instance_type() == ASM_WASM_DATA_TYPE) {  // (2)
+        os << "<ArrayBoilerplateDescription> ";
+        Cast<ArrayBoilerplateDescription>(*this)
+            ->constant_elements()
+            .GetHeapObject()
+            ->HeapObjectShortPrint(os);
+        return;
+      }
+      switch (instance_type) {
+        // ...
+        case FIXED_ARRAY_TYPE:
+          os << "<FixedArray[" << Cast<FixedArray>(*this)->length() << "]>";
+          os << "\nStart FixedArray\n";
+          Cast<FixedArray>(*this)->FixedArrayPrint(os);
+          os << "\nEnd FixedArray\n";
+          break;
+        case OBJECT_BOILERPLATE_DESCRIPTION_TYPE:
+          os << "<ObjectBoilerplateDescription["
+             << Cast<ObjectBoilerplateDescription>(*this)->capacity() << "]>";
+          os << "\nStart ObjectBoilerplateDescription\n";
+          Cast<ObjectBoilerplateDescription>(*this)
+              ->ObjectBoilerplateDescriptionPrint(os);
+          os << "\nEnd ObjectBoilerplateDescription\n";
+          break;
+        case FIXED_DOUBLE_ARRAY_TYPE:
+          os << "<FixedDoubleArray[" << Cast<FixedDoubleArray>(*this)->length()
+             << "]>";
+          os << "\nStart FixedDoubleArray\n";
+          Cast<FixedDoubleArray>(*this)->FixedDoubleArrayPrint(os);
+          os << "\nEnd FixedDoubleArray\n";
+          break;
+        // ...
+        case SHARED_FUNCTION_INFO_TYPE: {
+          Tagged<SharedFunctionInfo> shared = Cast<SharedFunctionInfo>(*this);
+          std::unique_ptr<char[]> debug_name = shared->DebugNameCStr();
+          if (debug_name[0] != '\0') {
+            os << "<SharedFunctionInfo " << debug_name.get() << ">";
+          } else {
+            os << "<SharedFunctionInfo>";
+          }
+          os << "\nStart SharedFunctionInfo\n";
+          shared->SharedFunctionInfoPrint(os);
+          os << "\nEnd SharedFunctionInfo\n";
+          break;
+        // ...
+    ```
+
+    1. 这里如果字符串过长就会被截断，我们也要 patch 掉
+    2. 不使用 case 是因为在[文件的 3800 行](https://github.com/v8/v8/blob/13.8.258.18/src/diagnostics/objects-printer.cc#L3800)的宏展开里，
+       这个情况已经被占用了：
+       ```cpp
+       #define MAKE_STRUCT_CASE(TYPE, Name, name)    \
+         case TYPE:                                  \
+           os << "<" #Name;                          \
+           Cast<Name>(*this)->BriefPrintDetails(os); \
+           os << ">";                                \
+           break;
+             STRUCT_LIST(MAKE_STRUCT_CASE)
+       #undef MAKE_STRUCT_CASE
+       ```
+
+=== "`src/objects/string.cc`"
+
+    ```cpp hl_lines="3-8 27 31"
+    void String::StringShortPrint(StringStream* accumulator) {
+      // ...
+      /* if (len > kMaxShortPrintLength) {
+        accumulator->Add("...<truncated>>");
+        accumulator->Add(SuffixForDebugPrint());
+        accumulator->Put('>');
+        return;
+      } */
+    
+      PrintUC16(accumulator, 0, len);
+      accumulator->Add(SuffixForDebugPrint());
+      accumulator->Put('>');
+    }
+    
+    void String::PrintUC16(StringStream* accumulator, int start, int end) {
+      if (end < 0) end = length();
+      StringCharacterStream stream(this, start);
+      for (int i = start; i < end && stream.HasMore(); i++) {
+        uint16_t c = stream.GetNext();
+        if (c == '\n') {
+          accumulator->Add("\\n");
+        } else if (c == '\r') {
+          accumulator->Add("\\r");
+        } else if (c == '\\') {
+          accumulator->Add("\\\\");     
+     // } else if (!std::isprint(c)) {
+        } else if (c < 32 || (c >= 127 && c < 160)) {  // 更准确的控制字符范围
+          accumulator->Add("\\x%02x", c);
+        } else {
+       // accumulator->Put(static_cast<char>(c));
+          accumulator->Add("\\u%04x", c);  // 把所有字符都转义
+        }
+      }
+    }
+    ```
+
+我们还需要 bypass 掉文件头 magic number 版本的检查，否则我们带有 `-electron.0` 后缀的 `cachedData` 是无法被加载的：
+
+```cpp title="src/snapshot/code-serializer.cc"
+SerializedCodeSanityCheckResult SerializedCodeData::SanityCheck(
+    uint32_t expected_ro_snapshot_checksum,
+    uint32_t expected_source_hash) const {
+    return SerializedCodeSanityCheckResult::kSuccess;  // 管它是什么，直接返回 success 就对了
+}
+
+SerializedCodeSanityCheckResult SerializedCodeData::SanityCheckWithoutSource(
+    uint32_t expected_ro_snapshot_checksum) const {
+    return SerializedCodeSanityCheckResult::kSuccess;
+}
+```
+
+这样我们就跟着资料完成了对 V8 的 patch 了！我们再赶紧跟着各路资料拼凑好 V8 的构建参数并尝试构建和运行吧：
+
+```ini title="args.gn"
+dcheck_always_on = false
+is_component_build = false
+is_debug = false
+target_cpu = "x64"
+use_custom_libcxx = false
+v8_monolithic = true  # 嗯，用于把 V8 各组件一起打成一个完整的大 `.lib`。
+v8_use_external_startup_data = false  # 嗯对，教程都是这样写的。
+
+v8_static_library = true
+v8_enable_disassembler = true  # 看名字都知道这两个参数肯定要开
+v8_enable_object_print = true
+v8_enable_sandbox = true  # https://www.electronjs.org/blog/v8-memory-cage
+v8_enable_pointer_compression = true
+v8_enable_pointer_compression_shared_cage = true
+v8_enable_external_code_space = true
+
+treat_warnings_as_errors = false
+```
+
+```powershell
+./d8 --no-lazy --no-flush-bytecode -e "loadBytecode('index.js.bin')"
+```
+
+<pre class="result" style="
+    overflow-y: hidden;
+    overflow-x: scroll; 
+    scrollbar-color: var(--md-default-fg-color--lighter) #0000; 
+    scrollbar-width: thin;">
+
+===== START DESERIALIZE BYTECODE =====
+
+==== C stack trace ===============================
+
+v8::internal::Deserializer&lt;...&gt;::ReadReadOnlyHeapRef&lt;v8::internal::SlotAccessorForHeapObject&gt; (v8\src\snapshot\deserializer.cc:1146)
+v8::internal::Deserializer&lt;...&gt;::ReadSingleBytecodeData&lt;v8::internal::SlotAccessorForHeapObject&gt; (v8\src\snapshot\deserializer.cc:1005)
+v8::internal::Deserializer&lt;...&gt;::ReadObject (v8\src\snapshot\deserializer.cc:863)
+v8::internal::Deserializer&lt;...&gt;::ReadNewObject&lt;v8::internal::SlotAccessorForHeapObject&gt; (v8\src\snapshot\deserializer.cc:1110)
+...
+v8::internal::ObjectDeserializer::Deserialize (v8\src\snapshot\object-deserializer.cc:42)
+v8::internal::ObjectDeserializer::DeserializeSharedFunctionInfo (v8\src\snapshot\object-deserializer.cc:32)
+v8::internal::CodeSerializer::Deserialize (v8\src\snapshot\code-serializer.cc:527)
+v8::Shell::LoadBytecode (v8\src\d8\d8.cc:2955)
+...
+
+</pre>
+
+WOW，我们的反汇编器完美地崩溃了。崩溃出现在 `ReadReadOnlyHeapRef`：了解到，如果当前 isolate 的 read-only snapshot 不匹配，反序列化读到某个 read-only heap reference 时就会出错。
+
+!!! info "什么是 V8 Snapshot？"
+
+    这里的 snapshot 可以理解为 V8 启动时恢复的一份预初始化堆状态。它包含 isolate 启动所需的对象、read-only heap 对象、shared heap 对象以及 context 相关对象。  
+    bytecode cache 依赖 snapshot，原因是每份 cache 不会把整个 V8 世界都打包进去。它会通过编号**引用**当前 V8 isolate 已经存在的对象和表（例如 Date.now，开发者也可固定自己的代码到快照）。
+
+这通常意味着我们 D8 所使用的 snapshot 在<u>内容</u>或<u>二进制布局</u>上与目标软件的 snapshot **不兼容**。我们先不考虑最坏的情况，先试试用 `--snapshot_blob <PATH>` 加载上该软件自己的快照吧！
+
+注意到该软件安装目录下有**两个**疑似快照的文件：`snapshot_blob.bin`<i>（V8 默认编译出的快照文件通常就叫这个名字）</i>和 `v8_context_snapshot.bin`<i>（Chromium / Electron 体系下特有的上下文快照）</i>。
+问题不大，两个都拿来试试就知道了：
+
+```js
+Warning: unknown flag --snapshot_blob.
+Try --help for options
+.\snapshot_blob.bin:1: SyntaxError: Invalid or unexpected token
+
+^
+SyntaxError: Invalid or unexpected token
+```
+
+啊咧？回想到，我们所使用的 args.gn 配置了 `#!ini v8_use_external_startup_data = false`，这意味着 D8 在编译时就已经把快照**硬编码**进了 V8。  
+解决方法很简单，打开就好了。但与此同时，`v8_monolithic` 参数也必须关闭。瞧，D8 的又一个隐形好处，我们不需要改其他东西，直接重新编译就好了。
+
+btw 我们还需要 bypass 掉 snapshot 的版本检查，原因和之前也是一样的：
+```cpp title="src/snapshot/snapshot.cc" hl_lines="2"
+bool Snapshot::VersionIsValid(const v8::StartupData* data) {
+  return true;
+}
+```
+
+---
+
+很遗憾的是，这依旧无法使我们的反汇编器工作。所以接下来我们该考虑那个最坏的情况了 —— 快照文件的二进制布局与我们的 V8 不匹配。
+
+让我们先来探究一下现在的这些文件到底是个什么情况：
+
+<span style="display: block; margin-top: -.4rem;"></span>
+
+=== "`snapshot_blob.bin`"
+
+    <div class="grid">
+    <div style="margin: -1em 0" markdown>
+
+    | Offset        | Field                            |
+    |---------------|----------------------------------|
+    | `#!c 0x00`    | number of contexts N             |
+    | `#!c 0x04`    | rehashability                    |
+    | `#!c 0x08`    | checksum                         |
+    | `#!c 0x0c`    | read-only snapshot checksum      |
+    | `#!c 0x10`    | (64 bytes) version string        |
+    | `#!c 0x50`    | offset to readonly               |
+    | `#!c 0x54`    | offset to shared heap            |
+    | `#!c 0x58`    | offset to context 0              |
+    | `#!c 0x5c...` | offset to context 1..N-1 segment |
+    | aligned       | startup snapshot data            |
+    | ...           | read-only snapshot data          |
+    | ...           | shared heap snapshot data        |
+    | ...           | context N snapshot data          |
+
+    </div>
+    <div style="margin-bottom: -1rem">
+    V8 snapshot blob 的数据结构由 [`src/snapshot/snapshot.cc`](https://github.com/v8/v8/blob/13.8.258.18/src/snapshot/snapshot.cc#L91) 负责创建。
+    核心类型是一个 [`v8::StartupData`](https://github.com/v8/v8/blob/13.8.258.18/include/v8-snapshot.h#L21)，内部 `#!cpp char* data` 的整数以 little-endian `uint32_t` 存储。
+
+    而表中的 startup snapshot data 起点是：
+    
+    ```cpp
+    POINTER_SIZE_ALIGN(0x58 + N * 4)
+    ```
+
+    这里的 snapshot data 指的是类型 [`SnapshotData`](https://github.com/v8/v8/blob/13.8.258.18/src/snapshot/snapshot-data.h#L70)，其内部数据结构长这样：
+        
+    | Offset     | Field                                              |
+    |------------|----------------------------------------------------|
+    | `#!c 0x00` | `#!cpp 0xC0DE0000 ^ ExternalReferenceTable::kSize` |
+    | `#!c 0x04` | payload length                                     |
+    | `#!c 0x08` | serialized payload                                 |
+
+    </div>
+    </div>
+
+=== "`index.js.bin`"
+
+    而 `cachedData` 的外层容器类型是 [`SerializedCodeData`](https://github.com/v8/v8/blob/13.8.258.18/src/snapshot/code-serializer.h#L115)，其内部数据结构长这样：
+    
+    | Offset     | Field                                              |
+    |------------|----------------------------------------------------|
+    | `#!c 0x00` | `#!cpp 0xC0DE0000 ^ ExternalReferenceTable::kSize` |
+    | `#!c 0x04` | version hash                                       |
+    | `#!c 0x08` | source hash                                        |
+    | `#!c 0x0c` | flag hash                                          |
+    | `#!c 0x10` | read-only snapshot checksum                        |
+    | `#!c 0x14` | payload length                                     |
+    | `#!c 0x18` | payload checksum                                   |
+    | aligned    | serialized payload                                 |
+
+<span style="display: block; margin-top: -1rem;"></span>
+
+以上的信息足以使我们在外部直接观察一下现有文件的状态，我们可以：
+
+- 读取 snapshot data / `cachedData` 开头 4 字节并异或 `0xC0DE0000`，就能得到生成这个 blob 时的 `ExternalReferenceTable::kSize`。
+- 读取 read-only snapshot checksum，用于判断 `cachedData` 属于哪一份 read-only snapshot。
+
+!!! note "`#!cpp ExternalReferenceTable::kSize` 是什么？"
+
+    `ExternalReferenceTable::kSize` 表示的是这个 V8 build 认识多少**种** external reference 表项。  
+    这里的 external reference 不是指 snapshot 里普通的 heap object ref，而是 V8 在生成代码、（反）序列化时需要引用的 C++ 侧地址或地址描述。
+    例如某些数学函数地址、V8 flags 地址、以及当前 isolate 内部某些字段的地址等。
+
+我们来简单地写个 `Node.js` 脚本：
+
+```js
+import fs from "node:fs";
+
+const MAGIC_XOR = 0xc0de0000 >>> 0;
+const PTR_SIZE = 8;
+const align = (value, alignment = PTR_SIZE) => (value + alignment - 1) & ~(alignment - 1);
+const hex32 = value => `0x${(value >>> 0).toString(16).padStart(8, '0')}`;
+
+function describeSnapshot(file, buffer = fs.readFileSync(file)) {
+    const contexts = buffer.readUInt32LE(0x00);
+    const roChecksum = buffer.readUInt32LE(0x0c);
+    const version = (() => {
+        const bytes = buffer.subarray(0x10, 0x50);
+        const end = bytes.indexOf(0);
+        return bytes.subarray(0, end < 0 ? bytes.length : end).toString('ascii');
+    })();
+    const startupOffset = align(0x58 + contexts * 4);
+    const startupTableSize = (buffer.readUInt32LE(startupOffset) ^ MAGIC_XOR) >>> 0;
+    console.log();
+    console.log(`[snapshot."${file}"]`);
+    console.log(`version_string                = "${version}"`);
+    console.log(`readonly_snapshot_checksum    = ${hex32(roChecksum)}`);
+    console.log(`external_reference_table_size = ${startupTableSize}`,);
+}
+
+function describeCodeCache(file, buffer = fs.readFileSync(file)) {
+    const tableSize = (buffer.readUInt32LE(0x00) ^ MAGIC_XOR) >>> 0;
+    const roChecksum = buffer.readUInt32LE(0x10);
+    console.log();
+    console.log(`[code_cache."${file}"]`);
+    console.log(`external_reference_table_size = ${tableSize}`);
+    console.log(`readonly_snapshot_checksum    = ${hex32(roChecksum)}`);
+}
+
+for (const file of [
+    "d8/snapshot_blob.bin",
+    "snapshot_blob.bin",
+    "v8_context_snapshot.bin"
+])
+    describeSnapshot(file);
+describeCodeCache("index.js.bin");
+```
+<pre class="result" style="
+    overflow-y: hidden;
+    overflow-x: scroll; 
+    scrollbar-color: var(--md-default-fg-color--lighter) #0000; 
+    scrollbar-width: thin;">
+
+[snapshot."d8/snapshot_blob.bin"]
+version_string                = "13.8.258.18"
+readonly_snapshot_checksum    = 0x2c07e465
+external_reference_table_size = 1403
+
+[snapshot."snapshot_blob.bin"]
+version_string                = "13.8.258.18-electron.0"
+readonly_snapshot_checksum    = 0x76710460
+external_reference_table_size = 1402
+
+[snapshot."v8_context_snapshot.bin"]
+version_string                = "13.8.258.18-electron.0"
+readonly_snapshot_checksum    = 0x40bfe37b
+external_reference_table_size = 1402
+
+[code_cache."index.js.bin"]
+external_reference_table_size = 1402
+readonly_snapshot_checksum    = 0x40bfe37b
+
+</pre>
 
 ## 反编译 V8 字节码 {#decompiling}
 
