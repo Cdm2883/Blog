@@ -56,14 +56,6 @@ hide:
 
     [:octicons-arrow-right-24: 过去看看](https://coolloong.github.io)
 
--   __std::enable_if 的博客__ ![avatar](https://q1.qlogo.cn/g?b=qq&nk=3829456380&s=640)
-
-    ---
-
-    面对天灾，我们并非无计可施。
-
-    [:octicons-arrow-right-24: 过去看看](https://enable-if.com)
-
 -   __Young's Toy Box__ ![avatar](https://avatars.githubusercontent.com/u/25684570?v=4)
 
     ---
