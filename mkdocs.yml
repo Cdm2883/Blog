@@ -33,10 +33,13 @@ theme:
         name: 切换到主题跟随系统
   features:
     - navigation.instant
+    - navigation.instant.prefetch
     - navigation.instant.progress
+    - navigation.instant.preview
     - navigation.tracking
     - navigation.tabs
     - navigation.sections
+    - navigation.path
     - navigation.top
     - navigation.footer
     - search.suggest
@@ -45,8 +48,10 @@ theme:
     - header.autohide
     - announce.dismiss
     - content.code.copy
+    - content.code.select
     - content.code.annotate
     - content.tabs.link
+    - content.footnote.tooltips
     - content.tooltips
     - content.action.edit
     - content.action.view
@@ -80,7 +85,7 @@ plugins:
         - tags
       comments_path: "#__comments"
   - tags:
-      tags_file: tags.md
+      tags_hierarchy: true
   - statistics:
       page_read_time: false
       page_template: ../overrides/page_statistics.html
