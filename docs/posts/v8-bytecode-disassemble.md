@@ -1,5 +1,7 @@
 ---
-date: 2026-06-07
+date:
+  created: 2026-06-07
+  updated: 2026-06-09
 categories:
   - 技术
 tags:
@@ -453,7 +455,7 @@ V8 的 `cachedData` 可不是什么公开的稳定格式，直接手搓二进制
 
 > ~~由于我手里只有一台 Windows 笔电，硬盘空间什么的又非常紧张，所以最开始我其实打算把构建那些操作全都放在 GitHub Actions 中完成，而我只需要 push 代码到仓库就好了。  
 > 但事实证明我错了，在 CI 上以默认配置构建一次 V8 需要整整两个半小时！而且 patch V8 的过程远没有我想象中的那么顺利，这导致每一次测试我都要艰难地等待好长一段时间...  
-> 所以说，还是在本地配置一下构建环境比较好，本文托了那么长一段时间才写好也有这部分原因在的呜呜呜呜呜呜~~
+> 所以说，还是在本地配置一下构建环境比较好，本文拖了那么长一段时间才写好也有这部分原因在的呜呜呜呜呜呜~~
 
 构建前我们还需要确认一下 V8 的具体版本，这个倒很简单，我们只需要再次注入 JS `#!js console.log(process.versions)` 然后再运行看看输出就好了：
 
@@ -1134,17 +1136,17 @@ class ExternalReference {
 ==== C stack trace ===============================
 
 v8::base::debug::StackTrace::StackTrace (v8\src\base\debug\stack_trace_win.cc:173)
-v8::platform::`anonymous namespace'::PrintStackTrace (v8\src\libplatform\default-platform.cc:28)
+v8::platform::`anonymous namespace&#39;::PrintStackTrace (v8\src\libplatform\default-platform.cc:28)
 V8_Fatal (v8\src\base\logging.cc:214)
 v8::internal::JSDispatchTable::TryAllocateAndInitializeEntry (v8\src\sandbox\js-dispatch-table-inl.h:166)
-v8::internal::FactoryBase<v8::internal::Factory>::NewJSDispatchHandle (v8\src\heap\factory-base.cc:1451)
-v8::internal::Deserializer<v8::internal::Isolate>::ReadAllocateJSDispatchEntry<v8::internal::SlotAccessorForHeapObject> (v8\src\snapshot\deserializer.cc:1512)
-v8::internal::Deserializer<v8::internal::Isolate>::ReadSingleBytecodeData<v8::internal::SlotAccessorForHeapObject> (v8\src\snapshot\deserializer.cc:1051)
-v8::internal::Deserializer<v8::internal::Isolate>::ReadObject (v8\src\snapshot\deserializer.cc:863)
+v8::internal::FactoryBase&lt;v8::internal::Factory&gt;::NewJSDispatchHandle (v8\src\heap\factory-base.cc:1451)
+v8::internal::Deserializer&lt;v8::internal::Isolate&gt;::ReadAllocateJSDispatchEntry&lt;v8::internal::SlotAccessorForHeapObject&gt; (v8\src\snapshot\deserializer.cc:1512)
+v8::internal::Deserializer&lt;v8::internal::Isolate&gt;::ReadSingleBytecodeData&lt;v8::internal::SlotAccessorForHeapObject&gt; (v8\src\snapshot\deserializer.cc:1051)
+v8::internal::Deserializer&lt;v8::internal::Isolate&gt;::ReadObject (v8\src\snapshot\deserializer.cc:863)
 ...
-v8::internal::Deserializer<v8::internal::Isolate>::ReadSingleBytecodeData<v8::internal::SlotAccessorForHeapObject> (v8\src\snapshot\deserializer.cc:1001)
-v8::internal::Deserializer<v8::internal::Isolate>::ReadObject (v8\src\snapshot\deserializer.cc:863)
-v8::internal::Deserializer<v8::internal::Isolate>::ReadNewObject<v8::internal::SlotAccessorForHandle<v8::internal::Isolate> > (v8\src\snapshot\deserializer.cc:1111)
+v8::internal::Deserializer&lt;v8::internal::Isolate&gt;::ReadSingleBytecodeData&lt;v8::internal::SlotAccessorForHeapObject&gt; (v8\src\snapshot\deserializer.cc:1001)
+v8::internal::Deserializer&lt;v8::internal::Isolate&gt;::ReadObject (v8\src\snapshot\deserializer.cc:863)
+v8::internal::Deserializer&lt;v8::internal::Isolate&gt;::ReadNewObject&lt;v8::internal::SlotAccessorForHandle&lt;v8::internal::Isolate&gt;&gt; (v8\src\snapshot\deserializer.cc:1111)
 
 </pre>
 

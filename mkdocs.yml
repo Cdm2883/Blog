@@ -78,7 +78,8 @@ plugins:
   - rss:
       match_path: ^posts[\\/].*
       date_from_meta:
-        as_creation: date
+        as_creation: rss_date_created
+        as_update: rss_date_updated
       categories:
         - categories
         - tags
@@ -163,6 +164,7 @@ hooks:
   - hooks/instant_preview.py
   - hooks/post_cover.py
   - hooks/random_posts.py
+  - hooks/rss_dates.py
 
 extra_javascript:
   - assets/javascripts/mathjax.js

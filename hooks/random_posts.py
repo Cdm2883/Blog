@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 from typing import Optional, Tuple
 
+import yaml
 from dateutil.parser import parse as parse_date
 from mkdocs.config import config_options
 from mkdocs.structure.files import File, Files
@@ -64,27 +65,19 @@ def get_post_url(file: File, config: config_options.Config) -> Optional[str]:
 
     return date + "/" + file.name
 
-post_date_pattern = re.compile(r'^date:\s*(.+)$')
-post_draft_pattern = re.compile(r'^draft:\s*true$')
 def get_post_meta(file_path: Path) -> Tuple[Optional[str], bool]:
-    date = None
-    is_draft = False
-    with open(file_path, 'r', encoding='utf-8') as f:
-        in_header = False
-        for line in f:
-            line = line.strip()
-            if line == '---':
-                if not in_header:
-                    in_header = True
-                    continue
-                else:
-                    break  # header end.
-            if in_header:
-                match_post = post_date_pattern.match(line)
-                if match_post:
-                    date_str = match_post.group(1).strip()
-                    date = parse_date(date_str).strftime("%Y/%m/%d")
-                    continue
-                if post_draft_pattern.match(line):
-                    is_draft = True
+    text = file_path.read_text(encoding='utf-8-sig')
+    match = re.match(r'^---\s*\n(.*?)\n---\s*\n', text, re.DOTALL)
+    if not match:
+        return None, False
+
+    meta = yaml.safe_load(match.group(1)) or {}
+    date = meta.get('date')
+    if isinstance(date, dict):
+        date = date.get('created')
+
+    if date:
+        date = parse_date(str(date)).strftime("%Y/%m/%d")
+
+    is_draft = bool(meta.get('draft'))
     return date, is_draft
