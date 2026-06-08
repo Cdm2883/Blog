@@ -99,8 +99,11 @@ plugins:
   - meta-descriptions
   - meta-manager
   - minify:
-      minify_css: true
+      minify_html: true
+      htmlmin_opts:
+        remove_comments: true
       cache_safe: true
+      minify_css: true
       css_files:
         - assets/stylesheets/md-banner.css
         - assets/stylesheets/md-search.css
