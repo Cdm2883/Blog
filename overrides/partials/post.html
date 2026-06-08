@@ -21,6 +21,11 @@
 -->
 <!-- Post excerpt -->
 <article class="md-post md-post--excerpt">
+
+  {% if post.meta.cover %}
+    <img class="md-post__cover" src="{{ post.meta.cover | url }}" alt="{{ post.post.title or post.title }}" />
+  {% endif %}
+
   <header class="md-post__header">
 
     <!-- Post authors -->

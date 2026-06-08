@@ -161,6 +161,7 @@ hooks:
   - hooks/copyright_footer.py
   - hooks/filters.py
   - hooks/instant_preview.py
+  - hooks/post_cover.py
   - hooks/random_posts.py
 
 extra_javascript:

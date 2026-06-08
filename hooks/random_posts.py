@@ -7,7 +7,7 @@ from dateutil.parser import parse as parse_date
 from mkdocs.config import config_options
 from mkdocs.structure.files import File, Files
 
-output_template = r"""<!DOCTYPE html>
+OUTPUT_TEMPLATE = r"""<!DOCTYPE html>
 <html lang="zh">
 <head>
 <meta charset="utf-8">
@@ -41,7 +41,7 @@ def on_files(files: Files, *, config: config_options.Config) -> Optional[Files]:
     project_root = Path(config.config_file_path).parent
     output_path = project_root / '.cache' / 'random-posts' / 'random' / 'index.html'
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(output_template.format(posts=json.dumps(posts)), encoding='utf-8')
+    output_path.write_text(OUTPUT_TEMPLATE.format(posts=json.dumps(posts)), encoding='utf-8')
 
     files.append(File(
         path=output_path.name,
