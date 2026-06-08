@@ -35,7 +35,6 @@ theme:
     - navigation.instant
     - navigation.instant.prefetch
     - navigation.instant.progress
-    - navigation.instant.preview
     - navigation.tracking
     - navigation.tabs
     - navigation.sections
@@ -111,6 +110,11 @@ plugins:
 
 # noinspection YAMLSchemaValidation, SpellCheckingInspection
 markdown_extensions:
+  - material.extensions.preview:
+      configurations:
+        - sources:
+            exclude:
+              - index.md
   - pymdownx.arithmatex:
       generic: true
   - pymdownx.emoji:
@@ -155,8 +159,9 @@ markdown_extensions:
 
 hooks:
   - hooks/copyright_footer.py
+  - hooks/filters.py
+  - hooks/instant_preview.py
   - hooks/random_posts.py
-  - hooks/str_pangu.py
 
 extra_javascript:
   - assets/javascripts/mathjax.js
@@ -170,6 +175,7 @@ extra_css:
   - assets/stylesheets/md-banner.css
   - assets/stylesheets/md-search.css
   - assets/stylesheets/md-post.css
+  - assets/stylesheets/md-typeset.css
 
 extra:
   social:

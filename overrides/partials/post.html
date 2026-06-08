@@ -91,7 +91,7 @@
 
   <!-- Post content -->
   <div class="md-post__content md-typeset">
-    {{ post.content }}
+    {{ post.content | replace(' data-preview=""', '') | safe }}
 
     <!-- Continue reading link -->
     {% if post.more %}

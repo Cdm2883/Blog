@@ -1,0 +1,3 @@
+.md-typeset [data-preview], .md-typeset abbr {
+    border-bottom: .05rem dotted var(--md-default-fg-color--lighter) !important;
+}
