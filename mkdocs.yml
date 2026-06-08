@@ -156,6 +156,7 @@ markdown_extensions:
 hooks:
   - hooks/copyright_footer.py
   - hooks/random_posts.py
+  - hooks/str_pangu.py
 
 extra_javascript:
   - assets/javascripts/mathjax.js

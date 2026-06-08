@@ -68,7 +68,7 @@
                                                     datetime="{{ page.config.date.created }}"
                                                     class="md-ellipsis"
                                             >
-                                                {{- page.config.date.created | date -}}
+                                                {{- page.config.date.created | date | str_pangu -}}
                                             </time>
                                         </div>
                                     </li>
@@ -82,7 +82,7 @@
                                                         datetime="{{ page.config.date.updated }}"
                                                         class="md-ellipsis"
                                                 >
-                                                    {{- page.config.date.updated | date -}}
+                                                    {{- page.config.date.updated | date | str_pangu -}}
                                                 </time>
                                             </div>
                                         </li>
