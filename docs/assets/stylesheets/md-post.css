@@ -4,6 +4,7 @@
     margin-bottom: .6rem;
     object-fit: cover;
     border-radius: .1rem;
+    background: var(--md-default-fg-color--lightest);
 }
 
 .md-post__content > p a,
