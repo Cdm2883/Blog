@@ -174,8 +174,9 @@ extra_css:
   - assets/stylesheets/article.css
   - assets/stylesheets/glightbox.css
   - assets/stylesheets/md-banner.css
-  - assets/stylesheets/md-search.css
+  - assets/stylesheets/md-nav.css
   - assets/stylesheets/md-post.css
+  - assets/stylesheets/md-search.css
   - assets/stylesheets/md-typeset.css
 
 extra:
