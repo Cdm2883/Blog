@@ -105,12 +105,12 @@ plugins:
       cache_safe: true
       minify_css: true
       css_files:
+        - assets/stylesheets/article.css
         - assets/stylesheets/md-banner.css
-        - assets/stylesheets/md-search.css
+        - assets/stylesheets/md-nav.css
         - assets/stylesheets/md-post.css
-  - glightbox:
-      effect: fade
-      manual: true
+        - assets/stylesheets/md-search.css
+        - assets/stylesheets/md-typeset.css
 
 # noinspection YAMLSchemaValidation, SpellCheckingInspection
 markdown_extensions:
@@ -165,6 +165,7 @@ hooks:
   - hooks/copyright_footer.py
   - hooks/filters.py
   - hooks/instant_preview.py
+  - hooks/photoswipe.py
   - hooks/post_cover.py
   - hooks/random_posts.py
   - hooks/rss_dates.py
@@ -174,10 +175,12 @@ extra_javascript:
   - https://unpkg.zhimg.com/mathjax@3.2.2/es5/tex-mml-chtml.js
   - https://cdn.bootcdn.net/ajax/libs/tablesort/5.2.1/tablesort.min.js
   - assets/javascripts/tablesort.js
+  - https://cdn.bootcdn.net/ajax/libs/photoswipe/5.4.4/umd/photoswipe.umd.min.js
+  - assets/javascripts/photoswipe.js
 
 extra_css:
+  - https://cdn.bootcdn.net/ajax/libs/photoswipe/5.4.4/photoswipe.min.css
   - assets/stylesheets/article.css
-  - assets/stylesheets/glightbox.css
   - assets/stylesheets/md-banner.css
   - assets/stylesheets/md-nav.css
   - assets/stylesheets/md-post.css
